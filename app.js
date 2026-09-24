@@ -1939,12 +1939,12 @@
             const tool = btn.dataset.tool;
             if (tool === state.markup.activeTool) {
                 if (tool === 'select') {
-                    btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-cyan-500/50 bg-cyan-500/25 text-cyan-300 shadow-md transition-all cursor-pointer';
+                    btn.className = 'markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 border border-cyan-500/50 bg-cyan-500/25 text-cyan-300 shadow-md transition-all cursor-pointer';
                 } else {
-                    btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/50 bg-amber-500/25 text-amber-300 shadow-md transition-all cursor-pointer';
+                    btn.className = 'markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 border border-amber-500/50 bg-amber-500/25 text-amber-300 shadow-md transition-all cursor-pointer';
                 }
             } else {
-                btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer';
+                btn.className = 'markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer';
             }
         });
 
@@ -1956,12 +1956,15 @@
 
     function updateMarkupColorUi() {
         document.querySelectorAll('.markup-color-btn').forEach(btn => {
-            const col = btn.dataset.color.toLowerCase();
-            const active = (state.markup.color.toLowerCase() === col);
+            const col = btn.dataset.color || '#EF4444';
+            btn.style.backgroundColor = col;
+            const active = (state.markup.color && state.markup.color.toLowerCase() === col.toLowerCase());
             if (active) {
-                btn.className = 'markup-color-btn w-7 h-7 rounded-full border-2 border-white shadow-lg transition-transform scale-125 cursor-pointer';
+                btn.className = 'markup-color-btn relative w-6 h-6 rounded-full ring-2 ring-white ring-offset-2 ring-offset-slate-900 shadow-lg scale-110 transition-all cursor-pointer flex items-center justify-center';
+                btn.innerHTML = '<span class="w-1.5 h-1.5 rounded-full bg-white shadow-sm pointer-events-none"></span>';
             } else {
-                btn.className = 'markup-color-btn w-7 h-7 rounded-full border-2 border-transparent hover:scale-105 transition-transform cursor-pointer opacity-80';
+                btn.className = 'markup-color-btn relative w-5 h-5 sm:w-6 sm:h-6 rounded-full border border-white/30 hover:scale-105 transition-all cursor-pointer opacity-85 flex items-center justify-center';
+                btn.innerHTML = '';
             }
         });
     }
@@ -1970,9 +1973,9 @@
         document.querySelectorAll('.markup-size-btn').forEach(btn => {
             const sz = parseInt(btn.dataset.size, 10);
             if (sz === state.markup.lineWidth) {
-                btn.className = 'markup-size-btn px-2.5 py-1 rounded-lg text-xs text-amber-300 font-bold border border-amber-500/50 bg-amber-500/25 cursor-pointer';
+                btn.className = 'markup-size-btn px-2 py-1 rounded-lg text-[11px] text-amber-300 font-bold border border-amber-500/50 bg-amber-500/25 cursor-pointer';
             } else {
-                btn.className = 'markup-size-btn px-2.5 py-1 rounded-lg text-xs text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer';
+                btn.className = 'markup-size-btn px-2 py-1 rounded-lg text-[11px] text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer';
             }
         });
     }

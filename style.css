@@ -330,4 +330,14 @@ input, textarea, select {
   overscroll-behavior-x: contain;
 }
 
+/* Botões de Cores e Contêiner do Editor */
+.markup-color-btn {
+  flex-shrink: 0;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+#modalMarkupEditor {
+  overscroll-behavior: contain;
+}
+
 
