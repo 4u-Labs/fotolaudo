@@ -485,6 +485,10 @@ $v = time();
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     <span>Seta</span>
                 </button>
+                <button type="button" data-tool="dimension" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer" title="Cota Técnica com Medição">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="3" y2="18"/><line x1="21" y1="6" x2="21" y2="18"/><polyline points="7 9 3 12 7 15"/><polyline points="17 9 21 12 17 15"/></svg>
+                    <span>Cota</span>
+                </button>
                 <button type="button" data-tool="pen" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                     <span>Traço</span>
@@ -567,6 +571,52 @@ $v = time();
                 </button>
                 <button id="btnConfirmTextInput" type="button" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/25 active:scale-95 transition-all cursor-pointer">
                     ✓ Inserir & Mover
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 7: INSERÇÃO DE MEDIDA / COTA TÉCNICA -->
+    <div id="modalDimensionInput" class="hidden fixed inset-0 z-[60] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-white/15 rounded-2xl p-4 sm:p-5 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-amber-400 text-lg">📏</span>
+                    <h3 class="text-sm font-bold text-white">Cota Técnica / Medição</h3>
+                </div>
+                <button id="btnCancelDimensionInput" type="button" class="text-slate-400 hover:text-white p-1 text-base cursor-pointer">✕</button>
+            </div>
+
+            <div>
+                <label class="block text-xs text-slate-300 font-semibold mb-1.5">Valor da Medida (com unidade):</label>
+                <input type="text" id="dimensionInputContent" class="w-full rounded-xl bg-black/60 border border-white/20 px-3.5 py-2.5 text-base text-white font-mono font-bold focus:outline-none focus:border-amber-400" placeholder="Ex: 25 cm, 1.50 m, 2 mm">
+            </div>
+
+            <!-- Atalhos Técnicos com 1 toque para Medidas Rápidas -->
+            <div>
+                <label class="block text-[11px] text-slate-400 font-medium mb-1.5">Atalhos Rápidos de Medição:</label>
+                <div class="grid grid-cols-4 gap-1.5">
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">0.5 mm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">1.0 mm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">2.0 mm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">5.0 mm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">10 cm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">15 cm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">20 cm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">25 cm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">50 cm</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">1.0 m</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">1.5 m</button>
+                    <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">2.0 m</button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+                <button id="btnDismissDimensionInput" type="button" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold cursor-pointer">
+                    Cancelar
+                </button>
+                <button id="btnConfirmDimensionInput" type="button" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/25 active:scale-95 transition-all cursor-pointer">
+                    ✓ Aplicar Cota
                 </button>
             </div>
         </div>

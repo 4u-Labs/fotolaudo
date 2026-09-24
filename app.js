@@ -48,7 +48,7 @@
         },
         currentCapture: null, // dados da foto temporária em revisão
         markup: {
-            activeTool: 'select', // 'select', 'arrow', 'pen', 'blur', 'text', 'circle', 'rect'
+            activeTool: 'select', // 'select', 'arrow', 'dimension', 'pen', 'blur', 'text', 'circle', 'rect'
             color: '#EF4444',
             lineWidth: 8,
             annotations: [],
@@ -62,6 +62,7 @@
             dragStartPoint: null,
             dragInitialAnnotation: null,
             pendingTextPos: null,
+            pendingDimensionCoords: null,
             startX: 0,
             startY: 0,
             currentPoints: [],
@@ -403,118 +404,14 @@
         }, duration);
     }
 
-    async function toggleTorch() {
+    function toggleTorch() {
         const btnTorch = document.getElementById('btnTorch');
-        const screenOverlay = document.getElementById('screenTorchOverlay');
-
-        // Se a luz de tela estiver ativa, desligá-la
-        if (state.screenTorchActive) {
-            state.screenTorchActive = false;
-            screenOverlay?.classList.add('hidden');
+        btnTorch?.classList.add('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
+        setTimeout(() => {
             btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
-            showToast('💡 Luz de tela desligada');
-            return;
-        }
+        }, 3500);
 
-        const nextState = !state.torchActive;
-
-        // Se estiver querendo DESLIGAR a lanterna física ativa
-        if (!nextState && state.stream) {
-            const track = state.stream.getVideoTracks()[0];
-            if (track) {
-                try {
-                    await track.applyConstraints({ advanced: [{ torch: false }] });
-                } catch (e) {}
-            }
-            state.torchActive = false;
-            btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
-            showToast('⚡ Lanterna física desligada');
-            return;
-        }
-
-        // Tentar LIGAR o LED físico na câmera atual
-        let track = state.stream?.getVideoTracks()[0];
-        let success = false;
-
-        if (track) {
-            try {
-                await track.applyConstraints({ advanced: [{ torch: true }] });
-                success = true;
-            } catch (err1) {}
-
-            if (!success) {
-                try {
-                    await track.applyConstraints({ advanced: [{ torch: true, fillLightMode: 'torch' }] });
-                    success = true;
-                } catch (err2) {}
-            }
-        }
-
-        // Se a câmera atual não conseguiu acender o LED:
-        // Procura entre as outras lentes traseiras do celular a lente com controle de LED
-        if (!success && navigator.mediaDevices?.enumerateDevices) {
-            try {
-                const devices = await navigator.mediaDevices.enumerateDevices();
-                const videoInputs = devices.filter(d => d.kind === 'videoinput');
-
-                for (const dev of videoInputs) {
-                    try {
-                        const testStream = await navigator.mediaDevices.getUserMedia({
-                            audio: false,
-                            video: { deviceId: { exact: dev.deviceId } }
-                        });
-                        const testTrack = testStream.getVideoTracks()[0];
-                        const caps = testTrack?.getCapabilities ? testTrack.getCapabilities() : {};
-
-                        let torchOk = false;
-                        try {
-                            await testTrack.applyConstraints({ advanced: [{ torch: true }] });
-                            torchOk = true;
-                        } catch (te) {}
-
-                        if (torchOk || caps.torch) {
-                            if (state.stream) {
-                                state.stream.getTracks().forEach(t => t.stop());
-                            }
-                            state.stream = testStream;
-                            video.srcObject = testStream;
-                            await video.play();
-                            success = true;
-                            break;
-                        } else {
-                            testStream.getTracks().forEach(t => t.stop());
-                        }
-                    } catch (probeErr) {}
-                }
-            } catch (enumErr) {}
-        }
-
-        if (success) {
-            state.torchActive = true;
-            btnTorch?.classList.add('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
-            showToast('⚡ Lanterna física ativada!');
-            return;
-        }
-
-        // Fallback: Se o aparelho bloqueia o LED físico para navegadores,
-        // aciona a Luz de Preenchimento de Tela
-        toggleScreenTorch();
-    }
-
-    function toggleScreenTorch() {
-        const btnTorch = document.getElementById('btnTorch');
-        const screenOverlay = document.getElementById('screenTorchOverlay');
-        state.screenTorchActive = !state.screenTorchActive;
-
-        if (state.screenTorchActive) {
-            screenOverlay?.classList.remove('hidden');
-            btnTorch?.classList.add('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
-            showToast('💡 Luz de Tela ativada (aparelho restringe LED no navegador)', 3500);
-        } else {
-            screenOverlay?.classList.add('hidden');
-            btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
-            showToast('💡 Luz de Tela desligada');
-        }
+        showToast('🔦 <strong>Iluminação para Fotos:</strong><br>Deslize o topo da tela do seu celular para baixo e ative a <strong>Lanterna nativa</strong> do aparelho!', 6000);
     }
 
     // Som de obturador sintético via Web Audio API (funciona offline e em qualquer navegador)
@@ -840,6 +737,101 @@
         ctx.restore();
     }
 
+    function drawDimension(ctx, x1, y1, x2, y2, text, color, lw, scale) {
+        const sc = scale || 1;
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const len = Math.hypot(dx, dy);
+        if (len < 5) return;
+
+        const ux = dx / len;
+        const uy = dy / len;
+        const nx = -uy;
+        const ny = ux;
+
+        ctx.save();
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = lw;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // 1. Linhas limitadoras perpendiculares nas pontas (witness lines)
+        const tickLen = Math.max(18 * sc, 24);
+        ctx.beginPath();
+        ctx.moveTo(x1 - nx * (tickLen / 2), y1 - ny * (tickLen / 2));
+        ctx.lineTo(x1 + nx * (tickLen / 2), y1 + ny * (tickLen / 2));
+        ctx.moveTo(x2 - nx * (tickLen / 2), y2 - ny * (tickLen / 2));
+        ctx.lineTo(x2 + nx * (tickLen / 2), y2 + ny * (tickLen / 2));
+        ctx.stroke();
+
+        // 2. Linha de cota principal
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+
+        // 3. Setas duplas nas pontas apontando para os extremos
+        const arrowLen = Math.max(16 * sc, 20);
+        const arrowAngle = Math.PI / 6;
+
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + (ux * Math.cos(arrowAngle) - uy * Math.sin(arrowAngle)) * arrowLen,
+                   y1 + (ux * Math.sin(arrowAngle) + uy * Math.cos(arrowAngle)) * arrowLen);
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x1 + (ux * Math.cos(-arrowAngle) - uy * Math.sin(-arrowAngle)) * arrowLen,
+                   y1 + (ux * Math.sin(-arrowAngle) + uy * Math.cos(-arrowAngle)) * arrowLen);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - (ux * Math.cos(arrowAngle) - uy * Math.sin(arrowAngle)) * arrowLen,
+                   y2 - (ux * Math.sin(arrowAngle) + uy * Math.cos(arrowAngle)) * arrowLen);
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(x2 - (ux * Math.cos(-arrowAngle) - uy * Math.sin(-arrowAngle)) * arrowLen,
+                   y2 - (ux * Math.sin(-arrowAngle) + uy * Math.cos(-arrowAngle)) * arrowLen);
+        ctx.stroke();
+
+        // 4. Badge com a medida no ponto médio
+        if (text) {
+            const mx = (x1 + x2) / 2;
+            const my = (y1 + y2) / 2;
+            const fontSize = Math.max(15, Math.round(18 * sc));
+            ctx.font = `bold ${fontSize}px "JetBrains Mono", monospace, sans-serif`;
+            const textMetrics = ctx.measureText(text);
+            const textW = textMetrics.width;
+            const padH = Math.round(10 * sc);
+            const padV = Math.round(6 * sc);
+            const boxW = textW + padH * 2;
+            const boxH = fontSize + padV * 2;
+
+            ctx.save();
+            ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+            ctx.shadowBlur = 8 * sc;
+            ctx.fillStyle = '#080d1a';
+            ctx.beginPath();
+            if (typeof ctx.roundRect === 'function') {
+                ctx.roundRect(mx - boxW / 2, my - boxH / 2, boxW, boxH, 6 * sc);
+            } else {
+                ctx.rect(mx - boxW / 2, my - boxH / 2, boxW, boxH);
+            }
+            ctx.fill();
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = Math.max(1.5 * sc, 2);
+            ctx.stroke();
+            ctx.restore();
+
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(text, mx, my);
+        }
+
+        ctx.restore();
+    }
+
     function drawAnnotation(ctx, a, scale) {
         if (!a) return;
         const lw = (a.lineWidth || 8) * scale;
@@ -848,6 +840,9 @@
         switch (a.type) {
             case 'arrow':
                 drawArrow(ctx, a.x1, a.y1, a.x2, a.y2, col, lw, scale);
+                break;
+            case 'dimension':
+                drawDimension(ctx, a.x1, a.y1, a.x2, a.y2, a.text, col, lw, scale);
                 break;
             case 'circle':
                 drawCircle(ctx, a.cx, a.cy, a.rx, a.ry, col, lw, scale);
@@ -890,8 +885,9 @@
                     maxY: a.cy + a.ry
                 };
             }
-            case 'arrow': {
-                const pad = Math.max(20 * sc, 30);
+            case 'arrow':
+            case 'dimension': {
+                const pad = Math.max(25 * sc, 35);
                 return {
                     minX: Math.min(a.x1, a.x2) - pad,
                     minY: Math.min(a.y1, a.y2) - pad,
@@ -960,7 +956,8 @@
                 return px >= bounds.minX - tolerance && px <= bounds.maxX + tolerance &&
                        py >= bounds.minY - tolerance && py <= bounds.maxY + tolerance;
             }
-            case 'arrow': {
+            case 'arrow':
+            case 'dimension': {
                 const x1 = a.x1, y1 = a.y1, x2 = a.x2, y2 = a.y2;
                 const l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2;
                 if (l2 === 0) return Math.hypot(px - x1, py - y1) <= tolerance;
@@ -992,6 +989,7 @@
         if (!a) return;
         switch (a.type) {
             case 'arrow':
+            case 'dimension':
                 a.x1 += dx;
                 a.y1 += dy;
                 a.x2 += dx;
@@ -1032,8 +1030,8 @@
         const h = (bounds.maxY - bounds.minY) + pad * 2;
         const touchRadius = Math.max(35 * sc, 45); // Toque amigável para dedos no celular
 
-        // Para seta: testar primeiro a ponta da seta e a base da seta
-        if (a.type === 'arrow') {
+        // Para seta e cota: testar primeiro a ponta e a base
+        if (a.type === 'arrow' || a.type === 'dimension') {
             if (Math.hypot(px - a.x2, py - a.y2) <= touchRadius) {
                 return { type: 'arrow-head' };
             }
@@ -1062,13 +1060,13 @@
         if (!target || !initial || !handle) return;
         const sc = scale || 1;
 
-        // Caso especial da seta: esticar/rotacionar diretamente pela ponta ou base
-        if (initial.type === 'arrow' && handle.type === 'arrow-head') {
+        // Caso especial da seta e cota: esticar/rotacionar diretamente pela ponta ou base
+        if ((initial.type === 'arrow' || initial.type === 'dimension') && handle.type === 'arrow-head') {
             target.x2 = coords.x;
             target.y2 = coords.y;
             return;
         }
-        if (initial.type === 'arrow' && handle.type === 'arrow-tail') {
+        if ((initial.type === 'arrow' || initial.type === 'dimension') && handle.type === 'arrow-tail') {
             target.x1 = coords.x;
             target.y1 = coords.y;
             return;
@@ -1104,7 +1102,8 @@
                 target.ry = Math.round(newH / 2);
                 break;
             }
-            case 'arrow': {
+            case 'arrow':
+            case 'dimension': {
                 target.x1 = Math.round(anchorX + (initial.x1 - anchorX) * scaleX);
                 target.y1 = Math.round(anchorY + (initial.y1 - anchorY) * scaleY);
                 target.x2 = Math.round(anchorX + (initial.x2 - anchorX) * scaleX);
@@ -1179,10 +1178,10 @@
             ctx.fillRect(c.x - dotSize / 2, c.y - dotSize / 2, dotSize, dotSize);
         });
 
-        // Se for seta, desenha alças especiais circulares na ponta e na base
-        if (a.type === 'arrow') {
+        // Se for seta ou cota, desenha alças especiais circulares na ponta e na base
+        if (a.type === 'arrow' || a.type === 'dimension') {
             const arrowRadius = Math.max(12, Math.round(15 * sc));
-            // Alça da ponta (esticar / rotacionar seta)
+            // Alça do ponto 2 (ponta)
             ctx.beginPath();
             ctx.arc(a.x2, a.y2, arrowRadius, 0, 2 * Math.PI);
             ctx.fillStyle = '#00D2FF';
@@ -1191,7 +1190,7 @@
             ctx.lineWidth = Math.max(2 * sc, 2.5);
             ctx.stroke();
 
-            // Alça da base
+            // Alça do ponto 1 (base)
             ctx.beginPath();
             ctx.arc(a.x1, a.y1, Math.max(10, Math.round(13 * sc)), 0, 2 * Math.PI);
             ctx.fillStyle = '#F59E0B';
@@ -1570,6 +1569,7 @@
         state.markup.dragStartPoint = null;
         state.markup.dragInitialAnnotation = null;
         state.markup.pendingTextPos = null;
+        state.markup.pendingDimensionCoords = null;
         state.markup.currentPoints = [];
 
         // Se já houver anotações na imagem, abre no modo 'select' (Mover) para facilitar edição
@@ -1718,6 +1718,47 @@
         closeTextInputModal();
     }
 
+    // Modal de Inserção de Cota Técnica / Medição
+    function openDimensionInputModal(x1, y1, x2, y2) {
+        state.markup.pendingDimensionCoords = { x1, y1, x2, y2 };
+        const input = document.getElementById('dimensionInputContent');
+        if (input) {
+            input.value = '';
+            setTimeout(() => input.focus(), 150);
+        }
+        document.getElementById('modalDimensionInput')?.classList.remove('hidden');
+    }
+
+    function closeDimensionInputModal() {
+        document.getElementById('modalDimensionInput')?.classList.add('hidden');
+        state.markup.pendingDimensionCoords = null;
+        state.markup.activeTool = 'select';
+        updateMarkupToolUi();
+        renderMarkupCanvas();
+    }
+
+    function confirmDimensionInput(presetText) {
+        const input = document.getElementById('dimensionInputContent');
+        const text = (presetText || (input ? input.value : '')).trim();
+        if (text && state.markup.pendingDimensionCoords) {
+            const coords = state.markup.pendingDimensionCoords;
+            state.markup.annotations.push({
+                type: 'dimension',
+                x1: coords.x1,
+                y1: coords.y1,
+                x2: coords.x2,
+                y2: coords.y,
+                text: text,
+                color: state.markup.color,
+                lineWidth: state.markup.lineWidth
+            });
+            state.markup.selectedIndex = state.markup.annotations.length - 1;
+            document.getElementById('btnMarkupDeleteSelected')?.classList.remove('hidden');
+            renderMarkupCanvas();
+        }
+        closeDimensionInputModal();
+    }
+
     function onMarkupPointerDown(e) {
         const canvas = document.getElementById('markupCanvas');
         if (!canvas) return;
@@ -1835,15 +1876,16 @@
         const sx = state.markup.startX;
         const sy = state.markup.startY;
 
-        if (tool === 'arrow') {
+        if (tool === 'arrow' || tool === 'dimension') {
             const dist = Math.hypot(coords.x - sx, coords.y - sy);
             if (dist >= 4) {
                 state.markup.tempAnnotation = {
-                    type: 'arrow',
+                    type: tool,
                     x1: sx,
                     y1: sy,
                     x2: coords.x,
                     y2: coords.y,
+                    text: '',
                     color: col,
                     lineWidth: lw
                 };
@@ -1920,6 +1962,30 @@
         // Se estava desenhando:
         if (state.markup.isDrawing) {
             state.markup.isDrawing = false;
+            const tool = state.markup.activeTool;
+            if (tool === 'dimension') {
+                let x1, y1, x2, y2;
+                if (state.markup.tempAnnotation && state.markup.tempAnnotation.type === 'dimension') {
+                    x1 = state.markup.tempAnnotation.x1;
+                    y1 = state.markup.tempAnnotation.y1;
+                    x2 = state.markup.tempAnnotation.x2;
+                    y2 = state.markup.tempAnnotation.y2;
+                } else {
+                    // Tap sem arrasto: gera cota horizontal padrão de 140px centrada no toque
+                    const cx = coords.x;
+                    const cy = coords.y;
+                    x1 = Math.round(cx - 70);
+                    y1 = Math.round(cy);
+                    x2 = Math.round(cx + 70);
+                    y2 = Math.round(cy);
+                }
+                state.markup.tempAnnotation = null;
+                state.markup.currentPoints = [];
+                renderMarkupCanvas();
+                openDimensionInputModal(x1, y1, x2, y2);
+                return;
+            }
+
             if (state.markup.tempAnnotation) {
                 state.markup.annotations.push(state.markup.tempAnnotation);
                 state.markup.tempAnnotation = null;
@@ -2472,6 +2538,22 @@
         document.querySelectorAll('#modalTextInput .text-chip').forEach(chip => {
             chip.addEventListener('click', () => {
                 confirmTextInput(chip.textContent.trim());
+            });
+        });
+
+        // Modal de Inserção de Cota Técnica / Medição
+        document.getElementById('btnCancelDimensionInput')?.addEventListener('click', closeDimensionInputModal);
+        document.getElementById('btnDismissDimensionInput')?.addEventListener('click', closeDimensionInputModal);
+        document.getElementById('btnConfirmDimensionInput')?.addEventListener('click', () => confirmDimensionInput());
+        document.getElementById('dimensionInputContent')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmDimensionInput();
+            }
+        });
+        document.querySelectorAll('#modalDimensionInput .dim-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                confirmDimensionInput(chip.textContent.trim());
             });
         });
 
