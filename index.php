@@ -433,6 +433,19 @@ $v = time();
                             <button id="cfgRemoveLogoBtn" class="px-3 py-2 rounded-xl border border-white/10 text-slate-400 text-xs hover:text-red-400 cursor-pointer" data-i18n="cfg_remove_logo">Remover</button>
                         </div>
                     </div>
+                    <!-- Controle de Transparência / Opacidade da Logo -->
+                    <div id="cfgLogoOpacityRow" class="mt-2.5 p-2.5 rounded-xl bg-black/30 border border-white/5 space-y-1.5">
+                        <div class="flex items-center justify-between text-slate-300 text-[11px]">
+                            <span data-i18n="cfg_logo_opacity_label">Opacidade / Transparência da Logo:</span>
+                            <span id="cfgLogoOpacityVal" class="font-mono font-bold text-amber-400">75%</span>
+                        </div>
+                        <input type="range" id="cfgLogoOpacitySlider" min="30" max="100" value="75" step="5" class="w-full accent-amber-400 cursor-pointer">
+                        <div class="flex justify-between text-[10px] text-slate-500">
+                            <span data-i18n="cfg_opacity_translucent">Mais Translúcida (30%)</span>
+                            <span data-i18n="cfg_opacity_balanced">Equilibrada (75%)</span>
+                            <span data-i18n="cfg_opacity_solid">Sólida (100%)</span>
+                        </div>
+                    </div>
                 </div>
                 <div>
                     <label class="block text-slate-400 mb-1" data-i18n="cfg_tags_label">Tags Rápidas (separadas por vírgula)</label>

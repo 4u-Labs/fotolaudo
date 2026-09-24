@@ -21,6 +21,7 @@
         fiscalName: 'Eng. Fabiano Braga',
         stampStyle: 'concessao', // 'concessao', 'laudo', 'minimalista'
         customLogoUrl: null,
+        logoOpacity: 0.75,
         activeTag: 'Cabine Manual',
         quickTags: [
             'Cabine Manual',
@@ -119,6 +120,7 @@
                 if (parsed.fiscalName) state.fiscalName = parsed.fiscalName;
                 if (parsed.stampStyle) state.stampStyle = parsed.stampStyle;
                 if (parsed.customLogoUrl) state.customLogoUrl = parsed.customLogoUrl;
+                if (parsed.logoOpacity !== undefined) state.logoOpacity = Number(parsed.logoOpacity);
                 if (parsed.quickTags && Array.isArray(parsed.quickTags)) state.quickTags = parsed.quickTags;
             } else if (window.FotoLaudoI18n && window.FotoLaudoI18n.getCurrentLang() === 'en') {
                 state.currentProject = 'Toll Plaza P02 - MP 84';
@@ -142,6 +144,7 @@
                 fiscalName: state.fiscalName,
                 stampStyle: state.stampStyle,
                 customLogoUrl: state.customLogoUrl,
+                logoOpacity: state.logoOpacity !== undefined ? state.logoOpacity : 0.75,
                 quickTags: state.quickTags
             };
             localStorage.setItem('fotolaudo_cfg_v1', JSON.stringify(payload));
@@ -1375,14 +1378,35 @@
             ctx.fillText(`${meta.dataHora} • UTM: ${meta.utm.zone} ${meta.utm.easting}/${meta.utm.northing} • AZ: ${meta.azimuth}°`, Math.round(20 * scale), height - Math.round(16 * scale));
         }
 
-        // Desenhar Logotipo customizado se houver
+        // Desenhar Logotipo customizado se houver (Dimensionado proporcionalmente e translúcido)
         if (state.customLogoUrl) {
             try {
                 const logoImg = await loadImage(state.customLogoUrl);
-                const logoH = Math.round(45 * scale);
-                const aspect = logoImg.width / logoImg.height;
-                const logoW = Math.round(logoH * aspect);
-                ctx.drawImage(logoImg, width - Math.round(24 * scale) - logoW, Math.round(20 * scale), logoW, logoH);
+                const minDim = Math.min(width, height);
+                // Proporção otimizada para visibilidade técnica nítida sem ser invasiva:
+                // Baseado na menor dimensão da foto (~9.5%) com altura mínima de 65px
+                const targetH = Math.max(65, Math.round(minDim * 0.095));
+                const maxW = Math.round(width * 0.30);
+                const aspect = (logoImg.width && logoImg.height) ? (logoImg.width / logoImg.height) : 1;
+
+                let logoH = targetH;
+                let logoW = Math.round(logoH * aspect);
+
+                if (logoW > maxW) {
+                    logoW = maxW;
+                    logoH = Math.round(logoW / aspect);
+                }
+
+                const marginX = Math.max(16, Math.round(minDim * 0.025));
+                const marginY = Math.max(16, Math.round(minDim * 0.025));
+                const posX = width - marginX - logoW;
+                const posY = marginY;
+
+                ctx.save();
+                const opacity = (typeof state.logoOpacity === 'number') ? state.logoOpacity : 0.75;
+                ctx.globalAlpha = Math.max(0.2, Math.min(1.0, opacity));
+                ctx.drawImage(logoImg, posX, posY, logoW, logoH);
+                ctx.restore();
             } catch (e) {}
         }
 
@@ -2708,6 +2732,13 @@
             document.getElementById('cfgFiscalName').value = state.fiscalName;
             document.getElementById('cfgStampStyle').value = state.stampStyle;
             document.getElementById('cfgQuickTags').value = state.quickTags.join(', ');
+
+            const opVal = Math.round(((typeof state.logoOpacity === 'number') ? state.logoOpacity : 0.75) * 100);
+            const slider = document.getElementById('cfgLogoOpacitySlider');
+            const opText = document.getElementById('cfgLogoOpacityVal');
+            if (slider) slider.value = opVal;
+            if (opText) opText.innerText = `${opVal}%`;
+
             updateLogoPreview();
             document.getElementById('modalSettings').classList.remove('hidden');
         };
@@ -2717,7 +2748,7 @@
             document.getElementById('modalSettings').classList.add('hidden');
         });
 
-        // Logo Upload no Settings
+        // Logo Upload e Opacidade no Settings
         document.getElementById('cfgLogoFile')?.addEventListener('change', (e) => {
             const file = e.target.files?.[0];
             if (!file) return;
@@ -2733,12 +2764,22 @@
             updateLogoPreview();
         });
 
+        document.getElementById('cfgLogoOpacitySlider')?.addEventListener('input', (e) => {
+            const val = parseInt(e.target.value, 10);
+            const opText = document.getElementById('cfgLogoOpacityVal');
+            if (opText) opText.innerText = `${val}%`;
+            state.logoOpacity = val / 100;
+        });
+
         function updateLogoPreview() {
             const box = document.getElementById('cfgLogoPreviewBox');
+            const opRow = document.getElementById('cfgLogoOpacityRow');
             if (state.customLogoUrl) {
                 box.innerHTML = `<img src="${state.customLogoUrl}" class="max-h-full max-w-full object-contain">`;
+                if (opRow) opRow.classList.remove('opacity-40', 'pointer-events-none');
             } else {
                 box.innerHTML = `<span class="text-slate-500 text-xs">Sem logo</span>`;
+                if (opRow) opRow.classList.add('opacity-40', 'pointer-events-none');
             }
         }
 
@@ -2749,6 +2790,11 @@
             state.stampStyle = document.getElementById('cfgStampStyle').value;
             const tagsStr = document.getElementById('cfgQuickTags').value;
             state.quickTags = tagsStr.split(',').map((t) => t.trim()).filter(Boolean);
+
+            const slider = document.getElementById('cfgLogoOpacitySlider');
+            if (slider) {
+                state.logoOpacity = parseInt(slider.value, 10) / 100;
+            }
 
             saveSettingsToDisk();
             updateProjectBadge();
