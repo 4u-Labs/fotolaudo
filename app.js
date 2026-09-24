@@ -321,34 +321,56 @@
     // ============================================================
     // CÂMERA: WEBRTC & CONTROLES
     // ============================================================
-    async function startCamera() {
+    async function startCamera(preferredDeviceId = null) {
         if (state.stream) {
             state.stream.getTracks().forEach((track) => track.stop());
+            state.stream = null;
         }
 
-        const constraints = {
-            audio: false,
-            video: {
-                facingMode: state.facingMode === 'user' ? 'user' : { ideal: 'environment' },
-                width: { ideal: 1920, max: 3840 },
-                height: { ideal: 1080, max: 2160 }
-            }
+        const videoConstraints = preferredDeviceId ? {
+            deviceId: { exact: preferredDeviceId }
+        } : {
+            facingMode: { ideal: state.facingMode },
+            width: { ideal: 1920 },
+            height: { ideal: 1080 }
         };
 
         try {
-            const stream = await navigator.mediaDevices.getUserMedia(constraints);
+            const stream = await navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: videoConstraints
+            });
             state.stream = stream;
             video.srcObject = stream;
             await video.play();
             fallbackBox.classList.add('hidden');
-
-            const track = stream.getVideoTracks()[0];
-            if (track && typeof track.getCapabilities === 'function') {
-                console.log('FotoLaudo - Sensor capabilities:', track.getCapabilities());
-            }
         } catch (err) {
-            console.warn('Erro ao abrir câmera WebRTC:', err);
-            fallbackBox.classList.remove('hidden');
+            console.warn('Tentativa 1 falhou, tentando fallback com facingMode:', err);
+            try {
+                const fallbackStream = await navigator.mediaDevices.getUserMedia({
+                    audio: false,
+                    video: { facingMode: state.facingMode }
+                });
+                state.stream = fallbackStream;
+                video.srcObject = fallbackStream;
+                await video.play();
+                fallbackBox.classList.add('hidden');
+            } catch (err2) {
+                console.warn('Tentativa 2 falhou, tentando qualquer câmera disponível:', err2);
+                try {
+                    const basicStream = await navigator.mediaDevices.getUserMedia({
+                        audio: false,
+                        video: true
+                    });
+                    state.stream = basicStream;
+                    video.srcObject = basicStream;
+                    await video.play();
+                    fallbackBox.classList.add('hidden');
+                } catch (err3) {
+                    console.error('Nenhuma câmera WebRTC pôde ser aberta:', err3);
+                    fallbackBox.classList.remove('hidden');
+                }
+            }
         }
     }
 
@@ -385,48 +407,88 @@
             return;
         }
 
-        const track = state.stream?.getVideoTracks()[0];
         const nextState = !state.torchActive;
-        let success = false;
 
-        if (track) {
-            // 1. Tentar acionar diretamente o LED físico do hardware via applyConstraints
-            try {
-                await track.applyConstraints({
-                    advanced: [{ torch: nextState }]
-                });
-                success = true;
-            } catch (err1) {
-                console.warn('Tentativa 1 applyConstraints torch falhou:', err1);
-            }
-
-            // 2. Se falhou, tentar com fillLightMode
-            if (!success) {
+        // Se estiver querendo DESLIGAR a lanterna física ativa
+        if (!nextState && state.stream) {
+            const track = state.stream.getVideoTracks()[0];
+            if (track) {
                 try {
-                    await track.applyConstraints({
-                        advanced: [{ torch: nextState, fillLightMode: nextState ? 'torch' : 'off' }]
-                    });
-                    success = true;
-                } catch (err2) {
-                    console.warn('Tentativa 2 fillLightMode falhou:', err2);
-                }
+                    await track.applyConstraints({ advanced: [{ torch: false }] });
+                } catch (e) {}
             }
-        }
-
-        if (success) {
-            state.torchActive = nextState;
-            if (state.torchActive) {
-                btnTorch?.classList.add('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
-                showToast('⚡ Lanterna física ativada');
-            } else {
-                btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
-                showToast('⚡ Lanterna física desligada');
-            }
+            state.torchActive = false;
+            btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
+            showToast('⚡ Lanterna física desligada');
             return;
         }
 
-        // 3. Fallback inteligente: se o aparelho/Android bloqueia o LED físico para navegadores,
-        // aciona a Luz de Preenchimento de Tela para iluminar o local da vistoria
+        // Tentar LIGAR o LED físico na câmera atual
+        let track = state.stream?.getVideoTracks()[0];
+        let success = false;
+
+        if (track) {
+            try {
+                await track.applyConstraints({ advanced: [{ torch: true }] });
+                success = true;
+            } catch (err1) {}
+
+            if (!success) {
+                try {
+                    await track.applyConstraints({ advanced: [{ torch: true, fillLightMode: 'torch' }] });
+                    success = true;
+                } catch (err2) {}
+            }
+        }
+
+        // Se a câmera atual não conseguiu acender o LED:
+        // Procura entre as outras lentes traseiras do celular a lente com controle de LED
+        if (!success && navigator.mediaDevices?.enumerateDevices) {
+            try {
+                const devices = await navigator.mediaDevices.enumerateDevices();
+                const videoInputs = devices.filter(d => d.kind === 'videoinput');
+
+                for (const dev of videoInputs) {
+                    try {
+                        const testStream = await navigator.mediaDevices.getUserMedia({
+                            audio: false,
+                            video: { deviceId: { exact: dev.deviceId } }
+                        });
+                        const testTrack = testStream.getVideoTracks()[0];
+                        const caps = testTrack?.getCapabilities ? testTrack.getCapabilities() : {};
+
+                        let torchOk = false;
+                        try {
+                            await testTrack.applyConstraints({ advanced: [{ torch: true }] });
+                            torchOk = true;
+                        } catch (te) {}
+
+                        if (torchOk || caps.torch) {
+                            if (state.stream) {
+                                state.stream.getTracks().forEach(t => t.stop());
+                            }
+                            state.stream = testStream;
+                            video.srcObject = testStream;
+                            await video.play();
+                            success = true;
+                            break;
+                        } else {
+                            testStream.getTracks().forEach(t => t.stop());
+                        }
+                    } catch (probeErr) {}
+                }
+            } catch (enumErr) {}
+        }
+
+        if (success) {
+            state.torchActive = true;
+            btnTorch?.classList.add('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
+            showToast('⚡ Lanterna física ativada!');
+            return;
+        }
+
+        // Fallback: Se o aparelho bloqueia o LED físico para navegadores,
+        // aciona a Luz de Preenchimento de Tela
         toggleScreenTorch();
     }
 
