@@ -11,13 +11,15 @@ $v = time();
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>FotoLaudo — Câmera Técnica & Laudos de Engenharia</title>
     
-    <!-- PWA Meta -->
-    <link rel="manifest" href="manifest.json">
+    <!-- PWA Meta & Icons -->
+    <link rel="manifest" href="manifest.json?v=<?php echo $v; ?>">
     <meta name="theme-color" content="#06080D">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <link rel="apple-touch-icon" href="assets/icon-192.png">
-    <link rel="icon" type="image/png" href="assets/icon-192.png">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/apple-touch-icon.png?v=<?php echo $v; ?>">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/favicon-32x32.png?v=<?php echo $v; ?>">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/favicon-16x16.png?v=<?php echo $v; ?>">
+    <link rel="shortcut icon" href="favicon.ico?v=<?php echo $v; ?>">
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">

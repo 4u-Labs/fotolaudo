@@ -1,10 +1,14 @@
-const CACHE_NAME = 'fotolaudo-v2.0';
+const CACHE_NAME = 'fotolaudo-v2.1';
 const ASSETS_TO_CACHE = [
   './',
   './index.php',
   './style.css',
   './app.js',
   './manifest.json',
+  './favicon.ico',
+  './assets/apple-touch-icon.png',
+  './assets/favicon-32x32.png',
+  './assets/favicon-16x16.png',
   './assets/icon-192.png',
   './assets/icon-512.png',
   'https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4',
