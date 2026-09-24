@@ -304,3 +304,15 @@ input, textarea, select {
   overscroll-behavior-x: contain;
 }
 
+/* Luz de Preenchimento de Tela (Screen Torch) */
+#screenTorchOverlay {
+  position: fixed;
+  inset: 0;
+  background-color: #ffffff;
+  pointer-events: none;
+  z-index: 25;
+  opacity: 0.95;
+  transition: opacity 0.2s ease-in-out;
+}
+
+

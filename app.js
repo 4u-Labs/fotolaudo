@@ -13,6 +13,7 @@
         stream: null,
         facingMode: 'environment', // 'environment' ou 'user'
         torchActive: false,
+        screenTorchActive: false,
         gridVisible: false,
         levelVisible: true,
         currentProject: 'Praça de Pedágio P02 - Km 84',
@@ -328,9 +329,9 @@
         const constraints = {
             audio: false,
             video: {
-                facingMode: { ideal: state.facingMode },
-                width: { ideal: 3840 },
-                height: { ideal: 2160 }
+                facingMode: state.facingMode === 'user' ? 'user' : { ideal: 'environment' },
+                width: { ideal: 1920, max: 3840 },
+                height: { ideal: 1080, max: 2160 }
             }
         };
 
@@ -340,35 +341,108 @@
             video.srcObject = stream;
             await video.play();
             fallbackBox.classList.add('hidden');
+
+            const track = stream.getVideoTracks()[0];
+            if (track && typeof track.getCapabilities === 'function') {
+                console.log('FotoLaudo - Sensor capabilities:', track.getCapabilities());
+            }
         } catch (err) {
             console.warn('Erro ao abrir câmera WebRTC:', err);
             fallbackBox.classList.remove('hidden');
         }
     }
 
-    async function toggleTorch() {
-        if (!state.stream) return;
-        const track = state.stream.getVideoTracks()[0];
-        if (!track) return;
+    // Toast HUD não obstrutivo
+    function showToast(message, duration = 3000) {
+        let toast = document.getElementById('hudToast');
+        if (!toast) {
+            toast = document.createElement('div');
+            toast.id = 'hudToast';
+            toast.className = 'fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-slate-900/95 border border-amber-500/40 text-white text-xs font-semibold shadow-2xl backdrop-blur-md transition-all duration-300 pointer-events-none opacity-0 scale-95 text-center max-w-[90vw] whitespace-normal';
+            document.body.appendChild(toast);
+        }
+        toast.innerHTML = message;
+        toast.classList.remove('opacity-0', 'scale-95');
+        toast.classList.add('opacity-100', 'scale-100');
 
-        const capabilities = track.getCapabilities ? track.getCapabilities() : {};
-        if (capabilities.torch) {
-            state.torchActive = !state.torchActive;
+        clearTimeout(toast._timer);
+        toast._timer = setTimeout(() => {
+            toast.classList.remove('opacity-100', 'scale-100');
+            toast.classList.add('opacity-0', 'scale-95');
+        }, duration);
+    }
+
+    async function toggleTorch() {
+        const btnTorch = document.getElementById('btnTorch');
+        const screenOverlay = document.getElementById('screenTorchOverlay');
+
+        // Se a luz de tela estiver ativa, desligá-la
+        if (state.screenTorchActive) {
+            state.screenTorchActive = false;
+            screenOverlay?.classList.add('hidden');
+            btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
+            showToast('💡 Luz de tela desligada');
+            return;
+        }
+
+        const track = state.stream?.getVideoTracks()[0];
+        const nextState = !state.torchActive;
+        let success = false;
+
+        if (track) {
+            // 1. Tentar acionar diretamente o LED físico do hardware via applyConstraints
             try {
                 await track.applyConstraints({
-                    advanced: [{ torch: state.torchActive }]
+                    advanced: [{ torch: nextState }]
                 });
-                const btnTorch = document.getElementById('btnTorch');
-                if (state.torchActive) {
-                    btnTorch.classList.add('text-amber-400', 'border-amber-500/50');
-                } else {
-                    btnTorch.classList.remove('text-amber-400', 'border-amber-500/50');
-                }
-            } catch (e) {
-                console.warn('Falha ao alternar lanterna:', e);
+                success = true;
+            } catch (err1) {
+                console.warn('Tentativa 1 applyConstraints torch falhou:', err1);
             }
+
+            // 2. Se falhou, tentar com fillLightMode
+            if (!success) {
+                try {
+                    await track.applyConstraints({
+                        advanced: [{ torch: nextState, fillLightMode: nextState ? 'torch' : 'off' }]
+                    });
+                    success = true;
+                } catch (err2) {
+                    console.warn('Tentativa 2 fillLightMode falhou:', err2);
+                }
+            }
+        }
+
+        if (success) {
+            state.torchActive = nextState;
+            if (state.torchActive) {
+                btnTorch?.classList.add('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
+                showToast('⚡ Lanterna física ativada');
+            } else {
+                btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
+                showToast('⚡ Lanterna física desligada');
+            }
+            return;
+        }
+
+        // 3. Fallback inteligente: se o aparelho/Android bloqueia o LED físico para navegadores,
+        // aciona a Luz de Preenchimento de Tela para iluminar o local da vistoria
+        toggleScreenTorch();
+    }
+
+    function toggleScreenTorch() {
+        const btnTorch = document.getElementById('btnTorch');
+        const screenOverlay = document.getElementById('screenTorchOverlay');
+        state.screenTorchActive = !state.screenTorchActive;
+
+        if (state.screenTorchActive) {
+            screenOverlay?.classList.remove('hidden');
+            btnTorch?.classList.add('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
+            showToast('💡 Luz de Tela ativada (aparelho restringe LED no navegador)', 3500);
         } else {
-            alert('A lanterna/flash não é suportada por esta câmera.');
+            screenOverlay?.classList.add('hidden');
+            btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
+            showToast('💡 Luz de Tela desligada');
         }
     }
 

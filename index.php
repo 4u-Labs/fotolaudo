@@ -36,6 +36,9 @@ $v = time();
     <!-- FLASH DE DISPARO -->
     <div id="shutterFlash"></div>
 
+    <!-- LUZ DE PREENCHIMENTO DE TELA (SCREEN TORCH / FLASH) -->
+    <div id="screenTorchOverlay" class="hidden"></div>
+
     <!-- CANVAS OCULTO PARA PROCESSAMENTO E CARIMBO EM ALTA DEFINIÇÃO -->
     <canvas id="renderCanvas" class="hidden"></canvas>
     <canvas id="mapCanvas" class="hidden" width="160" height="160"></canvas>
@@ -85,13 +88,13 @@ $v = time();
             <div id="levelDot" class="level-indicator-dot"></div>
         </div>
 
-        <!-- HUD: BARRA SUPERIOR (Status, Obras, Toggles com Rolagem Horizontal) -->
-        <div class="absolute top-0 inset-x-0 p-2 sm:p-4 bg-gradient-to-b from-black/85 via-black/45 to-transparent z-30 flex items-center justify-between gap-2 overflow-hidden">
-            <!-- Seletor de Projeto / Obra -->
-            <button id="btnProjectSelector" class="glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 transition-all max-w-[145px] sm:max-w-xs" title="Selecionar ou Configurar Obra">
-                <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
-                <span id="currentProjectBadge" class="text-xs font-semibold text-amber-200 truncate">Pedágio P02 Km 84</span>
-                <span class="text-[10px] text-amber-400 shrink-0">▾</span>
+        <!-- HUD: BARRA SUPERIOR (Status, Obras, Toggles Compactos com 5 Ferramentas Visíveis) -->
+        <div class="absolute top-0 inset-x-0 p-1.5 sm:p-3 bg-gradient-to-b from-black/85 via-black/45 to-transparent z-30 flex items-center justify-between gap-1 sm:gap-2 overflow-hidden">
+            <!-- Seletor de Projeto / Obra (Área compacta para liberar espaço total para os 5 botões) -->
+            <button id="btnProjectSelector" class="glass-pill px-2 py-1 rounded-full flex items-center gap-1 shrink-0 cursor-pointer active:scale-95 transition-all max-w-[95px] xs:max-w-[120px] sm:max-w-xs" title="Selecionar ou Configurar Obra">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
+                <span id="currentProjectBadge" class="text-[11px] font-semibold text-amber-200 truncate">Pedágio P02 Km 84</span>
+                <span class="text-[9px] text-amber-400 shrink-0">▾</span>
             </button>
 
             <!-- Telemetria Rápida Central (Graus / Nível) -->
@@ -103,27 +106,27 @@ $v = time();
                 <span id="quickGpsAcc" class="text-slate-300">±--m</span>
             </div>
 
-            <!-- Botões de Controle Rápido (Com rolagem horizontal para telas pequenas) -->
-            <div id="topToolsBar" class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 px-1 touch-pan-x flex-1 min-w-0 justify-start sm:justify-end">
+            <!-- Botões de Controle Rápido (Todos os 5 visíveis diretamente na tela) -->
+            <div id="topToolsBar" class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5 touch-pan-x flex-1 min-w-0 justify-end">
                 <!-- Lanterna / Flash -->
-                <button id="btnTorch" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-amber-400 active:scale-90 transition-all cursor-pointer" title="Lanterna/Flash">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+                <button id="btnTorch" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-amber-400 active:scale-90 transition-all cursor-pointer" title="Lanterna/Flash">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 </button>
                 <!-- Alternar Grade -->
-                <button id="btnToggleGrid" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-cyan-400 active:scale-90 transition-all cursor-pointer" title="Alternar Grade">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
+                <button id="btnToggleGrid" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-cyan-400 active:scale-90 transition-all cursor-pointer" title="Alternar Grade">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
                 </button>
                 <!-- Alternar Nível -->
-                <button id="btnToggleLevel" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-emerald-400 border-emerald-500/40 hover:text-emerald-300 active:scale-90 transition-all cursor-pointer" title="Nível de Bolha">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
+                <button id="btnToggleLevel" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-emerald-400 border-emerald-500/40 hover:text-emerald-300 active:scale-90 transition-all cursor-pointer" title="Nível de Bolha">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
                 </button>
                 <!-- Inverter Câmera -->
-                <button id="btnFlipCamera" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Trocar Câmera">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+                <button id="btnFlipCamera" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Trocar Câmera">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 </button>
                 <!-- Configurações da Obra -->
-                <button id="btnOpenSettings" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Configurações">
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <button id="btnOpenSettings" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Configurações">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </button>
             </div>
         </div>
