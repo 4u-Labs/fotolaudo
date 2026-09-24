@@ -194,9 +194,18 @@ $v = time();
         </div>
 
         <div class="flex-1 overflow-y-auto p-4 flex flex-col lg:flex-row gap-4 max-w-6xl mx-auto w-full">
-            <!-- Imagem com Carimbo -->
-            <div class="flex-1 flex items-center justify-center bg-black/60 rounded-2xl overflow-hidden border border-white/10 p-2">
-                <img id="reviewImgPreview" class="max-h-[60vh] lg:max-h-[75vh] w-auto object-contain rounded-xl shadow-2xl" alt="Foto Carimbada">
+            <!-- Imagem com Carimbo e Ação de Anotação -->
+            <div class="flex-1 flex flex-col items-center justify-center bg-black/60 rounded-2xl overflow-hidden border border-white/10 p-3">
+                <div class="relative max-h-[58vh] lg:max-h-[72vh] flex items-center justify-center">
+                    <img id="reviewImgPreview" class="max-h-[58vh] lg:max-h-[72vh] w-auto object-contain rounded-xl shadow-2xl" alt="Foto Carimbada">
+                </div>
+                <div class="mt-3 flex items-center gap-2">
+                    <button id="btnOpenMarkupModal" type="button" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        <span>Anotar na Foto (Setas, Círculos, Textos)</span>
+                    </button>
+                    <span id="markupCountBadge" class="hidden text-[11px] font-bold px-2.5 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300">0 anotações</span>
+                </div>
             </div>
 
             <!-- Painel de Edição de Metadados -->
@@ -413,6 +422,80 @@ $v = time();
                 <button id="btnSaveSettings" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95">
                     Salvar Configurações
                 </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: EDITOR DE ANOTAÇÕES TÉCNICAS (SETAS, CÍRCULOS, TEXTOS) -->
+    <div id="modalMarkupEditor" class="hidden fixed inset-0 z-50 bg-black/95 backdrop-blur-2xl flex flex-col">
+        <!-- Top Toolbar -->
+        <div class="p-3 bg-slate-900 border-b border-white/10 flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+                <span class="text-amber-400 text-lg">✏️</span>
+                <span class="text-sm font-bold text-white">Anotações & Destaques de Campo</span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btnMarkupUndo" class="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-200 flex items-center gap-1 active:scale-95 transition-all cursor-pointer" title="Desfazer última anotação">
+                    <span>↩️ Desfazer</span>
+                </button>
+                <button id="btnMarkupClear" class="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-300 flex items-center gap-1 active:scale-95 transition-all cursor-pointer" title="Limpar todas as anotações">
+                    <span>🗑️ Limpar</span>
+                </button>
+                <button id="btnMarkupApply" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
+                    <span>✓ Concluir</span>
+                </button>
+                <button id="btnMarkupCancel" class="text-slate-400 hover:text-white p-1.5 text-base cursor-pointer">✕</button>
+            </div>
+        </div>
+
+        <!-- Canvas Drawing Surface -->
+        <div id="markupCanvasContainer" class="flex-1 overflow-hidden relative flex items-center justify-center p-2 bg-[#03060c] touch-none">
+            <canvas id="markupCanvas" class="max-w-full max-h-full object-contain border border-white/10 rounded-xl shadow-2xl cursor-crosshair"></canvas>
+        </div>
+
+        <!-- Bottom Floating Dock (Toolbox) -->
+        <div class="p-3 bg-slate-900 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
+            <!-- Ferramentas de Desenho -->
+            <div class="flex items-center gap-1.5 overflow-x-auto">
+                <button type="button" data-tool="arrow" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/40 bg-amber-500/20 text-amber-300 transition-all cursor-pointer">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
+                    <span>Seta</span>
+                </button>
+                <button type="button" data-tool="circle" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
+                    <span>Círculo</span>
+                </button>
+                <button type="button" data-tool="rect" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                    <span>Retângulo</span>
+                </button>
+                <button type="button" data-tool="pen" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                    <span>Traço</span>
+                </button>
+                <button type="button" data-tool="text" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
+                    <span>Texto</span>
+                </button>
+            </div>
+
+            <!-- Cores & Espessura -->
+            <div class="flex items-center gap-4">
+                <!-- Seletor de Cores Técnicas -->
+                <div class="flex items-center gap-1.5">
+                    <button type="button" data-color="#EF4444" class="markup-color-btn w-7 h-7 rounded-full bg-red-500 border-2 border-white shadow-md transition-transform scale-110 cursor-pointer" title="Vermelho RNC / Falha"></button>
+                    <button type="button" data-color="#F59E0B" class="markup-color-btn w-7 h-7 rounded-full bg-amber-500 border-2 border-transparent hover:scale-105 transition-transform cursor-pointer" title="Amarelo Atenção"></button>
+                    <button type="button" data-color="#10B981" class="markup-color-btn w-7 h-7 rounded-full bg-emerald-500 border-2 border-transparent hover:scale-105 transition-transform cursor-pointer" title="Verde Conforme"></button>
+                    <button type="button" data-color="#00D2FF" class="markup-color-btn w-7 h-7 rounded-full bg-cyan-400 border-2 border-transparent hover:scale-105 transition-transform cursor-pointer" title="Ciano Medição"></button>
+                    <button type="button" data-color="#FFFFFF" class="markup-color-btn w-7 h-7 rounded-full bg-white border-2 border-transparent hover:scale-105 transition-transform cursor-pointer" title="Branco"></button>
+                </div>
+
+                <!-- Espessura do Traço -->
+                <div class="flex items-center gap-1 bg-black/40 p-1 rounded-xl border border-white/10">
+                    <button type="button" data-size="4" class="markup-size-btn px-2.5 py-1 rounded-lg text-xs text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer">Fino</button>
+                    <button type="button" data-size="8" class="markup-size-btn px-2.5 py-1 rounded-lg text-xs text-amber-300 font-bold border border-amber-500/40 bg-amber-500/20 cursor-pointer">Médio</button>
+                    <button type="button" data-size="14" class="markup-size-btn px-2.5 py-1 rounded-lg text-xs text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer">Grosso</button>
+                </div>
             </div>
         </div>
     </div>

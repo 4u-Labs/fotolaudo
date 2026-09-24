@@ -46,6 +46,18 @@
             timestamp: new Date()
         },
         currentCapture: null, // dados da foto temporária em revisão
+        markup: {
+            activeTool: 'arrow', // 'arrow', 'circle', 'rect', 'pen', 'text'
+            color: '#EF4444',
+            lineWidth: 8,
+            annotations: [],
+            isDrawing: false,
+            startX: 0,
+            startY: 0,
+            currentPoints: [],
+            tempAnnotation: null,
+            baseImage: null
+        },
         db: null,
         selectedGalleryIds: new Set()
     };
@@ -452,6 +464,194 @@
         ctx.fillText('RADAR GPS', 8, 16);
     }
 
+    // ============================================================
+    // FUNÇÕES DE DESENHO DE ANOTAÇÕES TÉCNICAS (MARKUP)
+    // ============================================================
+    function drawArrow(ctx, x1, y1, x2, y2, color, lineWidth, scale) {
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const dist = Math.hypot(dx, dy);
+        if (dist < 4) return;
+
+        const angle = Math.atan2(dy, dx);
+        const headLen = Math.max(22 * scale, lineWidth * 3.2);
+        const headAngle = Math.PI / 6; // 30 graus
+
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+        ctx.shadowBlur = 6 * scale;
+        ctx.shadowOffsetX = 2 * scale;
+        ctx.shadowOffsetY = 2 * scale;
+
+        ctx.strokeStyle = color;
+        ctx.fillStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        // Linha da haste (para ligeiramente antes da ponta)
+        ctx.beginPath();
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(
+            x2 - Math.cos(angle) * (headLen * 0.4),
+            y2 - Math.sin(angle) * (headLen * 0.4)
+        );
+        ctx.stroke();
+
+        // Cabeça geométrica com entalhe
+        ctx.beginPath();
+        ctx.moveTo(x2, y2);
+        ctx.lineTo(
+            x2 - headLen * Math.cos(angle - headAngle),
+            y2 - headLen * Math.sin(angle - headAngle)
+        );
+        ctx.lineTo(
+            x2 - (headLen * 0.65) * Math.cos(angle),
+            y2 - (headLen * 0.65) * Math.sin(angle)
+        );
+        ctx.lineTo(
+            x2 - headLen * Math.cos(angle + headAngle),
+            y2 - headLen * Math.sin(angle + headAngle)
+        );
+        ctx.closePath();
+        ctx.fill();
+
+        ctx.restore();
+    }
+
+    function drawCircle(ctx, cx, cy, rx, ry, color, lineWidth, scale) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+        ctx.shadowBlur = 6 * scale;
+        ctx.shadowOffsetX = 2 * scale;
+        ctx.shadowOffsetY = 2 * scale;
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, Math.max(6, rx), Math.max(6, ry), 0, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawRect(ctx, x, y, w, h, color, lineWidth, scale) {
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+        ctx.shadowBlur = 6 * scale;
+        ctx.shadowOffsetX = 2 * scale;
+        ctx.shadowOffsetY = 2 * scale;
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.strokeRect(x, y, w, h);
+        ctx.restore();
+    }
+
+    function drawPen(ctx, points, color, lineWidth, scale) {
+        if (!points || points.length < 2) return;
+        ctx.save();
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+        ctx.shadowBlur = 6 * scale;
+        ctx.shadowOffsetX = 2 * scale;
+        ctx.shadowOffsetY = 2 * scale;
+
+        ctx.strokeStyle = color;
+        ctx.lineWidth = lineWidth;
+        ctx.lineCap = 'round';
+        ctx.lineJoin = 'round';
+
+        ctx.beginPath();
+        ctx.moveTo(points[0].x, points[0].y);
+        for (let i = 1; i < points.length; i++) {
+            ctx.lineTo(points[i].x, points[i].y);
+        }
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawTextLabel(ctx, x, y, text, color, scale) {
+        if (!text) return;
+        ctx.save();
+        const fontSize = Math.max(14, Math.round(18 * scale));
+        ctx.font = `bold ${fontSize}px "JetBrains Mono", Inter, sans-serif`;
+
+        const padH = Math.round(12 * scale);
+        const padV = Math.round(8 * scale);
+        const textW = ctx.measureText(text).width;
+        const textH = fontSize;
+
+        let boxX = x;
+        let boxY = y - textH - padV * 2;
+        if (boxY < 10) boxY = y + padV;
+        if (boxX + textW + padH * 2 > ctx.canvas.width) {
+            boxX = Math.max(10, ctx.canvas.width - textW - padH * 2 - 10);
+        }
+
+        const boxW = textW + padH * 2;
+        const boxH = textH + padV * 2;
+        const radius = Math.round(6 * scale);
+
+        // Sombra da caixa
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
+        ctx.shadowBlur = 8 * scale;
+        ctx.shadowOffsetX = 2 * scale;
+        ctx.shadowOffsetY = 3 * scale;
+
+        // Fundo da etiqueta escura com borda na cor técnica
+        ctx.fillStyle = 'rgba(7, 11, 20, 0.92)';
+        ctx.strokeStyle = color;
+        ctx.lineWidth = Math.max(2, 2.5 * scale);
+
+        ctx.beginPath();
+        if (typeof ctx.roundRect === 'function') {
+            ctx.roundRect(boxX, boxY, boxW, boxH, radius);
+        } else {
+            ctx.rect(boxX, boxY, boxW, boxH);
+        }
+        ctx.fill();
+        ctx.stroke();
+
+        // Ponto de fixação na coordenada exata do clique
+        ctx.beginPath();
+        ctx.arc(x, y, Math.round(5 * scale), 0, 2 * Math.PI);
+        ctx.fillStyle = color;
+        ctx.fill();
+
+        // Texto com alto contraste
+        ctx.shadowBlur = 0;
+        ctx.shadowOffsetX = 0;
+        ctx.shadowOffsetY = 0;
+        ctx.fillStyle = '#ffffff';
+        ctx.textBaseline = 'top';
+        ctx.fillText(text, boxX + padH, boxY + padV);
+
+        ctx.restore();
+    }
+
+    function drawAnnotation(ctx, a, scale) {
+        if (!a) return;
+        const lw = (a.lineWidth || 8) * scale;
+        const col = a.color || '#EF4444';
+
+        switch (a.type) {
+            case 'arrow':
+                drawArrow(ctx, a.x1, a.y1, a.x2, a.y2, col, lw, scale);
+                break;
+            case 'circle':
+                drawCircle(ctx, a.cx, a.cy, a.rx, a.ry, col, lw, scale);
+                break;
+            case 'rect':
+                drawRect(ctx, a.x, a.y, a.w, a.h, col, lw, scale);
+                break;
+            case 'pen':
+                drawPen(ctx, a.points, col, lw, scale);
+                break;
+            case 'text':
+                drawTextLabel(ctx, a.x, a.y, a.text, col, scale);
+                break;
+        }
+    }
+
     async function stampImage(imageSource, meta) {
         const canvas = renderCanvas;
         const ctx = canvas.getContext('2d');
@@ -468,6 +668,12 @@
 
         // Escala dinâmica do carimbo proporcional à largura da imagem
         const scale = Math.max(1, width / 1280);
+
+        // 2. Desenhar as anotações técnicas sobre a foto base
+        if (meta && meta.annotations && Array.isArray(meta.annotations) && meta.annotations.length > 0) {
+            meta.annotations.forEach(a => drawAnnotation(ctx, a, scale));
+        }
+
         const fontSans = 'Inter, -apple-system, sans-serif';
         const fontMono = '"JetBrains Mono", monospace';
 
@@ -644,7 +850,8 @@
             utm: state.telemetry.utm,
             dataHora: now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR'),
             notas: '',
-            stampStyle: state.stampStyle
+            stampStyle: state.stampStyle,
+            annotations: []
         };
 
         let rawDataUrl;
@@ -696,7 +903,8 @@
                 utm: state.telemetry.utm,
                 dataHora: now.toLocaleDateString('pt-BR') + ' ' + now.toLocaleTimeString('pt-BR'),
                 notas: '',
-                stampStyle: state.stampStyle
+                stampStyle: state.stampStyle,
+                annotations: []
             };
 
             const stampedDataUrl = await stampImage(rawImg, meta);
@@ -708,6 +916,19 @@
             openReviewModal();
         };
         reader.readAsDataURL(file);
+    }
+
+    // Atualizar contador de anotações no modal de revisão
+    function updateMarkupBadge() {
+        const badge = document.getElementById('markupCountBadge');
+        if (!badge) return;
+        const count = (state.currentCapture?.meta?.annotations || []).length;
+        if (count > 0) {
+            badge.innerText = `${count} anotaç${count === 1 ? 'ão' : 'ões'}`;
+            badge.classList.remove('hidden');
+        } else {
+            badge.classList.add('hidden');
+        }
     }
 
     // Modal de Revisão
@@ -724,6 +945,8 @@
         radios.forEach((r) => {
             r.checked = r.value === c.meta.status;
         });
+
+        updateMarkupBadge();
 
         document.getElementById('modalReviewPhoto').classList.remove('hidden');
     }
@@ -747,6 +970,254 @@
         const newStamped = await stampImage(c.rawImg, c.meta);
         c.stampedDataUrl = newStamped;
         document.getElementById('reviewImgPreview').src = newStamped;
+    }
+
+    // ============================================================
+    // EDITOR DE ANOTAÇÕES TÉCNICAS (SETAS, CÍRCULOS, TEXTOS)
+    // ============================================================
+    function openMarkupEditor() {
+        const c = state.currentCapture;
+        if (!c || !c.rawImg) return;
+
+        state.markup.baseImage = c.rawImg;
+        state.markup.annotations = JSON.parse(JSON.stringify(c.meta.annotations || []));
+        state.markup.tempAnnotation = null;
+        state.markup.isDrawing = false;
+        state.markup.currentPoints = [];
+
+        const canvas = document.getElementById('markupCanvas');
+        if (canvas) {
+            canvas.width = c.rawImg.naturalWidth || c.rawImg.width;
+            canvas.height = c.rawImg.naturalHeight || c.rawImg.height;
+        }
+
+        updateMarkupToolUi();
+        updateMarkupColorUi();
+        updateMarkupSizeUi();
+        renderMarkupCanvas();
+
+        document.getElementById('modalMarkupEditor').classList.remove('hidden');
+    }
+
+    function closeMarkupEditor() {
+        state.markup.isDrawing = false;
+        state.markup.tempAnnotation = null;
+        document.getElementById('modalMarkupEditor').classList.add('hidden');
+    }
+
+    async function applyMarkup() {
+        const c = state.currentCapture;
+        if (!c) return;
+
+        c.meta.annotations = JSON.parse(JSON.stringify(state.markup.annotations));
+        updateMarkupBadge();
+
+        const stampedDataUrl = await stampImage(c.rawImg, c.meta);
+        c.stampedDataUrl = stampedDataUrl;
+        document.getElementById('reviewImgPreview').src = stampedDataUrl;
+
+        document.getElementById('modalMarkupEditor').classList.add('hidden');
+    }
+
+    function undoMarkup() {
+        if (state.markup.annotations.length > 0) {
+            state.markup.annotations.pop();
+            renderMarkupCanvas();
+        }
+    }
+
+    function clearMarkup() {
+        if (state.markup.annotations.length > 0) {
+            if (confirm('Deseja apagar todas as marcações desta foto?')) {
+                state.markup.annotations = [];
+                renderMarkupCanvas();
+            }
+        }
+    }
+
+    function renderMarkupCanvas() {
+        const canvas = document.getElementById('markupCanvas');
+        if (!canvas || !state.markup.baseImage) return;
+        const ctx = canvas.getContext('2d');
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(state.markup.baseImage, 0, 0, canvas.width, canvas.height);
+
+        const scale = Math.max(1, canvas.width / 1280);
+
+        state.markup.annotations.forEach(a => drawAnnotation(ctx, a, scale));
+
+        if (state.markup.tempAnnotation) {
+            drawAnnotation(ctx, state.markup.tempAnnotation, scale);
+        }
+    }
+
+    function getMarkupCanvasCoords(e) {
+        const canvas = document.getElementById('markupCanvas');
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = rect.width ? canvas.width / rect.width : 1;
+        const scaleY = rect.height ? canvas.height / rect.height : 1;
+        return {
+            x: Math.round((e.clientX - rect.left) * scaleX),
+            y: Math.round((e.clientY - rect.top) * scaleY)
+        };
+    }
+
+    function onMarkupPointerDown(e) {
+        const canvas = document.getElementById('markupCanvas');
+        if (!canvas) return;
+        const coords = getMarkupCanvasCoords(e);
+
+        if (state.markup.activeTool === 'text') {
+            const txt = prompt('Digite o texto ou rótulo técnico (ex: FISSURA 0.3mm, ARMADURA EXPOSTA):', 'Fissura');
+            if (txt && txt.trim()) {
+                state.markup.annotations.push({
+                    type: 'text',
+                    x: coords.x,
+                    y: coords.y,
+                    text: txt.trim(),
+                    color: state.markup.color,
+                    lineWidth: state.markup.lineWidth
+                });
+                renderMarkupCanvas();
+            }
+            return;
+        }
+
+        state.markup.isDrawing = true;
+        state.markup.startX = coords.x;
+        state.markup.startY = coords.y;
+        if (state.markup.activeTool === 'pen') {
+            state.markup.currentPoints = [{ x: coords.x, y: coords.y }];
+        }
+        state.markup.tempAnnotation = null;
+
+        try {
+            canvas.setPointerCapture(e.pointerId);
+        } catch (err) {}
+    }
+
+    function onMarkupPointerMove(e) {
+        if (!state.markup.isDrawing) return;
+        const canvas = document.getElementById('markupCanvas');
+        if (!canvas) return;
+
+        const coords = getMarkupCanvasCoords(e);
+        const tool = state.markup.activeTool;
+        const sx = state.markup.startX;
+        const sy = state.markup.startY;
+        const col = state.markup.color;
+        const lw = state.markup.lineWidth;
+
+        if (tool === 'arrow') {
+            const dist = Math.hypot(coords.x - sx, coords.y - sy);
+            if (dist >= 4) {
+                state.markup.tempAnnotation = {
+                    type: 'arrow',
+                    x1: sx,
+                    y1: sy,
+                    x2: coords.x,
+                    y2: coords.y,
+                    color: col,
+                    lineWidth: lw
+                };
+            }
+        } else if (tool === 'circle') {
+            const cx = (sx + coords.x) / 2;
+            const cy = (sy + coords.y) / 2;
+            const rx = Math.abs(coords.x - sx) / 2;
+            const ry = Math.abs(coords.y - sy) / 2;
+            if (rx >= 3 || ry >= 3) {
+                state.markup.tempAnnotation = {
+                    type: 'circle',
+                    cx: Math.round(cx),
+                    cy: Math.round(cy),
+                    rx: Math.round(rx),
+                    ry: Math.round(ry),
+                    color: col,
+                    lineWidth: lw
+                };
+            }
+        } else if (tool === 'rect') {
+            const rx = Math.min(sx, coords.x);
+            const ry = Math.min(sy, coords.y);
+            const rw = Math.abs(coords.x - sx);
+            const rh = Math.abs(coords.y - sy);
+            if (rw >= 3 || rh >= 3) {
+                state.markup.tempAnnotation = {
+                    type: 'rect',
+                    x: Math.round(rx),
+                    y: Math.round(ry),
+                    w: Math.round(rw),
+                    h: Math.round(rh),
+                    color: col,
+                    lineWidth: lw
+                };
+            }
+        } else if (tool === 'pen') {
+            state.markup.currentPoints.push({ x: coords.x, y: coords.y });
+            state.markup.tempAnnotation = {
+                type: 'pen',
+                points: [...state.markup.currentPoints],
+                color: col,
+                lineWidth: lw
+            };
+        }
+
+        renderMarkupCanvas();
+    }
+
+    function onMarkupPointerUp(e) {
+        if (!state.markup.isDrawing) return;
+        state.markup.isDrawing = false;
+
+        const canvas = document.getElementById('markupCanvas');
+        if (canvas) {
+            try {
+                canvas.releasePointerCapture(e.pointerId);
+            } catch (err) {}
+        }
+
+        if (state.markup.tempAnnotation) {
+            state.markup.annotations.push(state.markup.tempAnnotation);
+            state.markup.tempAnnotation = null;
+        }
+        state.markup.currentPoints = [];
+        renderMarkupCanvas();
+    }
+
+    function updateMarkupToolUi() {
+        document.querySelectorAll('.markup-tool-btn').forEach(btn => {
+            const tool = btn.dataset.tool;
+            if (tool === state.markup.activeTool) {
+                btn.className = 'markup-tool-btn px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/50 bg-amber-500/25 text-amber-300 shadow-md transition-all cursor-pointer';
+            } else {
+                btn.className = 'markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer';
+            }
+        });
+    }
+
+    function updateMarkupColorUi() {
+        document.querySelectorAll('.markup-color-btn').forEach(btn => {
+            const col = btn.dataset.color.toLowerCase();
+            const active = (state.markup.color.toLowerCase() === col);
+            if (active) {
+                btn.className = 'markup-color-btn w-7 h-7 rounded-full border-2 border-white shadow-lg transition-transform scale-125 cursor-pointer';
+            } else {
+                btn.className = 'markup-color-btn w-7 h-7 rounded-full border-2 border-transparent hover:scale-105 transition-transform cursor-pointer opacity-80';
+            }
+        });
+    }
+
+    function updateMarkupSizeUi() {
+        document.querySelectorAll('.markup-size-btn').forEach(btn => {
+            const sz = parseInt(btn.dataset.size, 10);
+            if (sz === state.markup.lineWidth) {
+                btn.className = 'markup-size-btn px-2.5 py-1 rounded-lg text-xs text-amber-300 font-bold border border-amber-500/50 bg-amber-500/25 cursor-pointer';
+            } else {
+                btn.className = 'markup-size-btn px-2.5 py-1 rounded-lg text-xs text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer';
+            }
+        });
     }
 
     // Salvar Registro na IndexedDB
@@ -780,7 +1251,8 @@
             },
             dataHora: c.meta.dataHora,
             fullImg: c.stampedDataUrl,
-            thumbImg: thumbDataUrl
+            thumbImg: thumbDataUrl,
+            annotations: c.meta.annotations || []
         };
 
         const tx = state.db.transaction('photos', 'readwrite');
@@ -1197,10 +1669,46 @@
         document.getElementById('btnCloseReview')?.addEventListener('click', () => {
             document.getElementById('modalReviewPhoto').classList.add('hidden');
         });
+        document.getElementById('btnOpenMarkupModal')?.addEventListener('click', openMarkupEditor);
         document.getElementById('btnReapplyStamp')?.addEventListener('click', reapplyStamp);
         document.getElementById('btnSaveToGallery')?.addEventListener('click', saveCurrentToDb);
         document.getElementById('btnDownloadPhoto')?.addEventListener('click', downloadCurrentPhoto);
         document.getElementById('btnSharePhoto')?.addEventListener('click', shareCurrentPhoto);
+
+        // Modal de Editor de Anotações Técnicas (Markup)
+        document.getElementById('btnMarkupUndo')?.addEventListener('click', undoMarkup);
+        document.getElementById('btnMarkupClear')?.addEventListener('click', clearMarkup);
+        document.getElementById('btnMarkupApply')?.addEventListener('click', applyMarkup);
+        document.getElementById('btnMarkupCancel')?.addEventListener('click', closeMarkupEditor);
+
+        document.querySelectorAll('.markup-tool-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.markup.activeTool = btn.dataset.tool;
+                updateMarkupToolUi();
+            });
+        });
+
+        document.querySelectorAll('.markup-color-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.markup.color = btn.dataset.color;
+                updateMarkupColorUi();
+            });
+        });
+
+        document.querySelectorAll('.markup-size-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                state.markup.lineWidth = parseInt(btn.dataset.size, 10);
+                updateMarkupSizeUi();
+            });
+        });
+
+        const mCanvas = document.getElementById('markupCanvas');
+        if (mCanvas) {
+            mCanvas.addEventListener('pointerdown', onMarkupPointerDown);
+            mCanvas.addEventListener('pointermove', onMarkupPointerMove);
+            mCanvas.addEventListener('pointerup', onMarkupPointerUp);
+            mCanvas.addEventListener('pointercancel', onMarkupPointerUp);
+        }
 
         // Modal de Galeria
         document.getElementById('btnOpenGallery')?.addEventListener('click', openGalleryModal);
