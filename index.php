@@ -132,7 +132,7 @@ $v = time();
         </div>
 
         <!-- HUD: TARJA DE TELEMETRIA AO VIVO (Sobre o Visor) -->
-        <div class="absolute bottom-3 left-3 right-3 sm:right-auto sm:max-w-md pointer-events-none z-20">
+        <div id="hudCardContainer" class="absolute bottom-3 left-3 right-3 sm:right-auto sm:max-w-md pointer-events-none z-20">
             <div class="glass-panel rounded-2xl p-3 border border-white/10 shadow-2xl space-y-1.5 font-telemetry text-[11px] leading-tight text-slate-200">
                 <div class="flex items-center justify-between text-amber-400 font-bold border-b border-white/10 pb-1">
                     <span id="hudProjectTitle" class="truncate max-w-[200px]">Pedágio P02 Km 84</span>
@@ -155,14 +155,14 @@ $v = time();
     </div>
 
     <!-- CONTROLES INFERIORES (Disparo, Chips Rápidos, Galeria e PDF) -->
-    <div class="bg-[#080d1a] border-t border-white/10 p-3 sm:p-4 z-30 flex flex-col gap-3">
+    <div id="cameraControlsDock" class="bg-[#080d1a] border-t border-white/10 p-3 sm:p-4 z-30 flex flex-col gap-3">
         <!-- Barra de Chips Rápidos de Elementos (Scroll Horizontal) -->
         <div id="quickChipsContainer" class="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
             <!-- Chips injetados dinamicamente via JS -->
         </div>
 
         <!-- Barra Principal do Disparador -->
-        <div class="flex items-center justify-between max-w-lg mx-auto w-full px-2 sm:px-6">
+        <div id="shutterBarInner" class="flex items-center justify-between max-w-lg mx-auto w-full px-2 sm:px-6">
             <!-- Botão Galeria -->
             <button id="btnOpenGallery" class="relative w-12 h-12 rounded-2xl border border-white/15 bg-white/5 hover:bg-white/10 flex flex-col items-center justify-center text-slate-200 active:scale-95 transition-all cursor-pointer">
                 <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>

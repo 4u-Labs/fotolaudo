@@ -2404,6 +2404,23 @@
         // Disparador da Câmera
         document.getElementById('btnShutter')?.addEventListener('click', takePhoto);
 
+        // Disparo por Tecla (Espaço / Enter) para Teclado e Controles Remotos Bluetooth
+        window.addEventListener('keydown', (e) => {
+            if (e.code === 'Space' || e.key === ' ' || e.code === 'Enter') {
+                const activeTag = document.activeElement?.tagName;
+                if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
+                const reviewHidden = document.getElementById('modalReviewPhoto')?.classList.contains('hidden');
+                const markupHidden = document.getElementById('modalMarkupEditor')?.classList.contains('hidden');
+                const galleryHidden = document.getElementById('modalGallery')?.classList.contains('hidden');
+                const pdfHidden = document.getElementById('modalPdfGenerator')?.classList.contains('hidden');
+                const settingsHidden = document.getElementById('modalSettings')?.classList.contains('hidden');
+                if (reviewHidden && markupHidden && galleryHidden && pdfHidden && settingsHidden) {
+                    e.preventDefault();
+                    takePhoto();
+                }
+            }
+        });
+
         // Fallback File Input
         fallbackInput?.addEventListener('change', (e) => {
             handleFilePhoto(e.target.files?.[0]);
