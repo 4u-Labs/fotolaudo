@@ -55,6 +55,10 @@
             selectedIndex: -1,
             isDrawing: false,
             isDraggingAnnotation: false,
+            isResizing: false,
+            activeResizeHandle: null,
+            resizeInitialAnnotation: null,
+            resizeInitialBounds: null,
             dragStartPoint: null,
             dragInitialAnnotation: null,
             pendingTextPos: null,
@@ -1014,13 +1018,126 @@
         }
     }
 
+    // Identificação de clique/toque sobre as alças de redimensionamento
+    function getHandleAtPoint(px, py, a, scale) {
+        if (!a) return null;
+        const sc = scale || 1;
+        const bounds = getAnnotationBounds(a, sc);
+        if (!bounds) return null;
+
+        const pad = Math.round(14 * sc);
+        const minX = bounds.minX - pad;
+        const minY = bounds.minY - pad;
+        const w = (bounds.maxX - bounds.minX) + pad * 2;
+        const h = (bounds.maxY - bounds.minY) + pad * 2;
+        const touchRadius = Math.max(35 * sc, 45); // Toque amigável para dedos no celular
+
+        // Para seta: testar primeiro a ponta da seta e a base da seta
+        if (a.type === 'arrow') {
+            if (Math.hypot(px - a.x2, py - a.y2) <= touchRadius) {
+                return { type: 'arrow-head' };
+            }
+            if (Math.hypot(px - a.x1, py - a.y1) <= touchRadius) {
+                return { type: 'arrow-tail' };
+            }
+        }
+
+        const handles = [
+            { type: 'tl', x: minX, y: minY, anchorX: minX + w, anchorY: minY + h },
+            { type: 'tr', x: minX + w, y: minY, anchorX: minX, anchorY: minY + h },
+            { type: 'bl', x: minX, y: minY + h, anchorX: minX + w, anchorY: minY },
+            { type: 'br', x: minX + w, y: minY + h, anchorX: minX, anchorY: minY }
+        ];
+
+        for (const hnd of handles) {
+            if (Math.hypot(px - hnd.x, py - hnd.y) <= touchRadius) {
+                return hnd;
+            }
+        }
+        return null;
+    }
+
+    // Redimensionamento (Aumentar / Diminuir) pelas alças
+    function resizeAnnotation(target, initial, handle, coords, initBounds, scale) {
+        if (!target || !initial || !handle) return;
+        const sc = scale || 1;
+
+        // Caso especial da seta: esticar/rotacionar diretamente pela ponta ou base
+        if (initial.type === 'arrow' && handle.type === 'arrow-head') {
+            target.x2 = coords.x;
+            target.y2 = coords.y;
+            return;
+        }
+        if (initial.type === 'arrow' && handle.type === 'arrow-tail') {
+            target.x1 = coords.x;
+            target.y1 = coords.y;
+            return;
+        }
+
+        const anchorX = handle.anchorX;
+        const anchorY = handle.anchorY;
+
+        const newW = Math.max(20 * sc, Math.abs(coords.x - anchorX));
+        const newH = Math.max(20 * sc, Math.abs(coords.y - anchorY));
+        const newMinX = Math.min(coords.x, anchorX);
+        const newMinY = Math.min(coords.y, anchorY);
+
+        const oldW = Math.max(1, initBounds.maxX - initBounds.minX);
+        const oldH = Math.max(1, initBounds.maxY - initBounds.minY);
+
+        const scaleX = newW / oldW;
+        const scaleY = newH / oldH;
+
+        switch (initial.type) {
+            case 'rect':
+            case 'blur': {
+                target.x = Math.round(newMinX);
+                target.y = Math.round(newMinY);
+                target.w = Math.round(newW);
+                target.h = Math.round(newH);
+                break;
+            }
+            case 'circle': {
+                target.cx = Math.round(newMinX + newW / 2);
+                target.cy = Math.round(newMinY + newH / 2);
+                target.rx = Math.round(newW / 2);
+                target.ry = Math.round(newH / 2);
+                break;
+            }
+            case 'arrow': {
+                target.x1 = Math.round(anchorX + (initial.x1 - anchorX) * scaleX);
+                target.y1 = Math.round(anchorY + (initial.y1 - anchorY) * scaleY);
+                target.x2 = Math.round(anchorX + (initial.x2 - anchorX) * scaleX);
+                target.y2 = Math.round(anchorY + (initial.y2 - anchorY) * scaleY);
+                break;
+            }
+            case 'text': {
+                const factor = Math.max(0.5, (scaleX + scaleY) / 2);
+                target.x = Math.round(anchorX + (initial.x - anchorX) * scaleX);
+                target.y = Math.round(anchorY + (initial.y - anchorY) * scaleY);
+                const initLw = initial.lineWidth || 8;
+                target.lineWidth = Math.min(22, Math.max(3, Math.round(initLw * factor)));
+                break;
+            }
+            case 'pen': {
+                if (initial.points && target.points) {
+                    for (let i = 0; i < initial.points.length; i++) {
+                        target.points[i].x = Math.round(anchorX + (initial.points[i].x - anchorX) * scaleX);
+                        target.points[i].y = Math.round(anchorY + (initial.points[i].y - anchorY) * scaleY);
+                    }
+                }
+                break;
+            }
+        }
+    }
+
     function drawSelectionBox(ctx, a, scale) {
         if (!a) return;
         const sc = scale || 1;
         const bounds = getAnnotationBounds(a, sc);
         if (!bounds) return;
 
-        const pad = Math.round(12 * sc);
+        const pad = Math.round(14 * sc);
         const minX = bounds.minX - pad;
         const minY = bounds.minY - pad;
         const w = (bounds.maxX - bounds.minX) + pad * 2;
@@ -1033,31 +1150,73 @@
         ctx.setLineDash([8 * sc, 5 * sc]);
         ctx.strokeRect(minX, minY, w, h);
 
-        // Alças nos 4 cantos
+        // Alças nos 4 cantos para Aumentar / Diminuir
         ctx.setLineDash([]);
-        ctx.fillStyle = '#00D2FF';
-        const handleSize = Math.max(10, Math.round(14 * sc));
+        const handleSize = Math.max(14, Math.round(18 * sc));
         const halfH = handleSize / 2;
 
-        ctx.fillRect(minX - halfH, minY - halfH, handleSize, handleSize);
-        ctx.fillRect(minX + w - halfH, minY - halfH, handleSize, handleSize);
-        ctx.fillRect(minX - halfH, minY + h - halfH, handleSize, handleSize);
-        ctx.fillRect(minX + w - halfH, minY + h - halfH, handleSize, handleSize);
+        const corners = [
+            { x: minX, y: minY },
+            { x: minX + w, y: minY },
+            { x: minX, y: minY + h },
+            { x: minX + w, y: minY + h }
+        ];
 
-        // Etiqueta indicativa "ARRASTE PARA MOVER"
+        // Sombra nas alças
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
+        ctx.shadowBlur = 6 * sc;
+
+        corners.forEach(c => {
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(c.x - halfH, c.y - halfH, handleSize, handleSize);
+            ctx.strokeStyle = '#00D2FF';
+            ctx.lineWidth = Math.max(2 * sc, 2.5);
+            ctx.strokeRect(c.x - halfH, c.y - halfH, handleSize, handleSize);
+
+            // Ponto central ciano
+            ctx.fillStyle = '#00D2FF';
+            const dotSize = Math.max(4, Math.round(5 * sc));
+            ctx.fillRect(c.x - dotSize / 2, c.y - dotSize / 2, dotSize, dotSize);
+        });
+
+        // Se for seta, desenha alças especiais circulares na ponta e na base
+        if (a.type === 'arrow') {
+            const arrowRadius = Math.max(12, Math.round(15 * sc));
+            // Alça da ponta (esticar / rotacionar seta)
+            ctx.beginPath();
+            ctx.arc(a.x2, a.y2, arrowRadius, 0, 2 * Math.PI);
+            ctx.fillStyle = '#00D2FF';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = Math.max(2 * sc, 2.5);
+            ctx.stroke();
+
+            // Alça da base
+            ctx.beginPath();
+            ctx.arc(a.x1, a.y1, Math.max(10, Math.round(13 * sc)), 0, 2 * Math.PI);
+            ctx.fillStyle = '#F59E0B';
+            ctx.fill();
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = Math.max(2 * sc, 2.5);
+            ctx.stroke();
+        }
+
+        ctx.shadowBlur = 0;
+
+        // Etiqueta indicativa "ARRASTE OU PUXE AS ALÇAS"
         const tagFontSize = Math.max(11, Math.round(13 * sc));
         ctx.font = `bold ${tagFontSize}px "JetBrains Mono", Inter, sans-serif`;
-        const label = '👆 ARRASTE P/ MOVER';
+        const label = '👆 ARRASTE O ITEM OU PUXE AS ALÇAS ↔';
         const lm = ctx.measureText(label);
         const tagH = tagFontSize + 8 * sc;
-        const tagW = lm.width + 14 * sc;
-        const tagY = (minY - tagH - 6 * sc > 10) ? (minY - tagH - 6 * sc) : (minY + h + 8 * sc);
+        const tagW = lm.width + 16 * sc;
+        const tagY = (minY - tagH - 8 * sc > 10) ? (minY - tagH - 8 * sc) : (minY + h + 10 * sc);
 
         ctx.fillStyle = 'rgba(0, 210, 255, 0.95)';
         ctx.fillRect(minX, tagY, tagW, tagH);
         ctx.fillStyle = '#030712';
         ctx.textBaseline = 'middle';
-        ctx.fillText(label, minX + 7 * sc, tagY + tagH / 2);
+        ctx.fillText(label, minX + 8 * sc, tagY + tagH / 2);
 
         ctx.restore();
     }
@@ -1571,7 +1730,24 @@
             return;
         }
 
-        // 2. Se a ferramenta for MOVER (select):
+        // 2. Se houver um item selecionado, verificar se tocou em uma ALÇA DE REDIMENSIONAMENTO:
+        if (state.markup.selectedIndex >= 0 && state.markup.selectedIndex < state.markup.annotations.length) {
+            const selectedAnn = state.markup.annotations[state.markup.selectedIndex];
+            const handle = getHandleAtPoint(coords.x, coords.y, selectedAnn, scale);
+            if (handle) {
+                state.markup.isResizing = true;
+                state.markup.activeResizeHandle = handle;
+                state.markup.resizeInitialAnnotation = JSON.parse(JSON.stringify(selectedAnn));
+                state.markup.resizeInitialBounds = getAnnotationBounds(state.markup.resizeInitialAnnotation, scale);
+                state.markup.dragStartPoint = { x: coords.x, y: coords.y };
+                canvas.style.cursor = 'nwse-resize';
+                try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+                renderMarkupCanvas();
+                return;
+            }
+        }
+
+        // 3. Se a ferramenta for MOVER (select):
         if (state.markup.activeTool === 'select') {
             let hitIndex = -1;
             for (let i = state.markup.annotations.length - 1; i >= 0; i--) {
@@ -1595,6 +1771,7 @@
                 // Toque fora de qualquer anotação: desmarca
                 state.markup.selectedIndex = -1;
                 state.markup.isDraggingAnnotation = false;
+                state.markup.isResizing = false;
                 document.getElementById('btnMarkupDeleteSelected')?.classList.add('hidden');
                 canvas.style.cursor = 'default';
                 renderMarkupCanvas();
@@ -1602,8 +1779,9 @@
             }
         }
 
-        // 3. Ferramentas de Desenho (arrow, pen, blur, circle, rect)
+        // 4. Ferramentas de Desenho (arrow, pen, blur, circle, rect)
         state.markup.selectedIndex = -1;
+        state.markup.isResizing = false;
         document.getElementById('btnMarkupDeleteSelected')?.classList.add('hidden');
         state.markup.isDrawing = true;
         state.markup.startX = coords.x;
@@ -1624,8 +1802,23 @@
         const coords = getMarkupCanvasCoords(e);
         const col = state.markup.color;
         const lw = state.markup.lineWidth;
+        const scale = getMarkupScale();
 
-        // 1. Arrastando anotação para deslocar em tempo real (Mover)
+        // 1. Redimensionando pelas alças (Aumentar / Diminuir)
+        if (state.markup.isResizing && state.markup.selectedIndex >= 0) {
+            resizeAnnotation(
+                state.markup.annotations[state.markup.selectedIndex],
+                state.markup.resizeInitialAnnotation,
+                state.markup.activeResizeHandle,
+                coords,
+                state.markup.resizeInitialBounds,
+                scale
+            );
+            renderMarkupCanvas();
+            return;
+        }
+
+        // 2. Arrastando anotação para deslocar em tempo real (Mover)
         if (state.markup.isDraggingAnnotation && state.markup.selectedIndex >= 0) {
             const dx = coords.x - state.markup.dragStartPoint.x;
             const dy = coords.y - state.markup.dragStartPoint.y;
@@ -1636,7 +1829,7 @@
             return;
         }
 
-        // 2. Desenhando nova anotação
+        // 3. Desenhando nova anotação
         if (!state.markup.isDrawing) return;
         const tool = state.markup.activeTool;
         const sx = state.markup.startX;
@@ -1707,6 +1900,14 @@
                 canvas.releasePointerCapture(e.pointerId);
             } catch (err) {}
             canvas.style.cursor = state.markup.activeTool === 'select' ? 'default' : 'crosshair';
+        }
+
+        // Se estava redimensionando pelas alças:
+        if (state.markup.isResizing) {
+            state.markup.isResizing = false;
+            state.markup.activeResizeHandle = null;
+            renderMarkupCanvas();
+            return;
         }
 
         // Se estava arrastando para deslocar:
