@@ -55,16 +55,16 @@ $v = time();
             <div class="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 mb-4 text-3xl">
                 📷
             </div>
-            <h2 class="text-xl font-bold text-white mb-2">Acesso à Câmera</h2>
-            <p class="text-sm text-slate-400 max-w-sm mb-6 leading-relaxed">
+            <h2 class="text-xl font-bold text-white mb-2" data-i18n="cam_fallback_title">Acesso à Câmera</h2>
+            <p class="text-sm text-slate-400 max-w-sm mb-6 leading-relaxed" data-i18n="cam_fallback_desc">
                 Permita o acesso à câmera para ver o visor técnico em tempo real ou use a câmera nativa do aparelho.
             </p>
             <div class="flex flex-col sm:flex-row gap-3">
-                <button id="btnRetryCamera" class="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 active:scale-95 transition-all">
+                <button id="btnRetryCamera" class="px-5 py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 active:scale-95 transition-all" data-i18n="cam_fallback_btn_webrtc">
                     Ativar Câmera WebRTC
                 </button>
                 <label class="px-5 py-3 rounded-xl border border-white/20 bg-white/5 hover:bg-white/10 text-white font-semibold text-sm cursor-pointer active:scale-95 transition-all flex items-center justify-center gap-2">
-                    <span>Usar Câmera do Sistema</span>
+                    <span data-i18n="cam_fallback_btn_native">Usar Câmera do Sistema</span>
                     <input type="file" id="fallbackFileInput" accept="image/*" capture="environment" class="hidden">
                 </label>
             </div>
@@ -108,27 +108,35 @@ $v = time();
                 <span id="quickGpsAcc" class="text-slate-300">±--m</span>
             </div>
 
-            <!-- Botões de Controle Rápido (Todos os 5 visíveis diretamente na tela) -->
+            <!-- Botões de Controle Rápido (Todos visíveis diretamente na tela) -->
             <div id="topToolsBar" class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-0.5 px-0.5 touch-pan-x flex-1 min-w-0 justify-end">
+                <!-- Seletor de Idioma PT / EN -->
+                <div class="glass-pill rounded-full p-0.5 flex items-center shrink-0 border border-white/15 bg-black/40 mr-0.5" title="Mudar Idioma / Switch Language" data-i18n-title="top_lang_title">
+                    <button id="btnLangPt" type="button" class="lang-toggle-btn px-1.5 py-0.5 rounded-full text-[10px] font-bold transition-all cursor-pointer bg-amber-500 text-slate-950 shadow-sm" data-lang="pt">PT</button>
+                    <button id="btnLangEn" type="button" class="lang-toggle-btn px-1.5 py-0.5 rounded-full text-[10px] font-bold text-slate-400 hover:text-white transition-all cursor-pointer" data-lang="en">EN</button>
+                </div>
                 <!-- Lanterna / Flash -->
-                <button id="btnTorch" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-amber-400 active:scale-90 transition-all cursor-pointer" title="Lanterna/Flash">
+                <button id="btnTorch" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-amber-400 active:scale-90 transition-all cursor-pointer" title="Lanterna/Flash" data-i18n-title="top_torch_title">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 </button>
                 <!-- Alternar Grade -->
-                <button id="btnToggleGrid" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-cyan-400 active:scale-90 transition-all cursor-pointer" title="Alternar Grade">
+                <button id="btnToggleGrid" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-cyan-400 active:scale-90 transition-all cursor-pointer" title="Alternar Grade" data-i18n-title="top_grid_title">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
                 </button>
                 <!-- Alternar Nível -->
-                <button id="btnToggleLevel" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-emerald-400 border-emerald-500/40 hover:text-emerald-300 active:scale-90 transition-all cursor-pointer" title="Nível de Bolha">
+                <button id="btnToggleLevel" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-emerald-400 border-emerald-500/40 hover:text-emerald-300 active:scale-90 transition-all cursor-pointer" title="Nível de Bolha" data-i18n-title="top_level_title">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
                 </button>
                 <!-- Inverter Câmera -->
-                <button id="btnFlipCamera" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Trocar Câmera">
+                <button id="btnFlipCamera" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Trocar Câmera" data-i18n-title="top_flip_title">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 </button>
-                <!-- Configurações da Obra -->
-                <button id="btnOpenSettings" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Configurações">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+                <!-- Configurações da Obra (Engrenagem completa) -->
+                <button id="btnOpenSettings" class="w-8 h-8 sm:w-9 sm:h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Configurações" data-i18n-title="top_settings_title">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="3"></circle>
+                        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+                    </svg>
                 </button>
             </div>
         </div>
@@ -194,7 +202,7 @@ $v = time();
         <div class="p-3 border-b border-white/10 flex items-center justify-between shrink-0 bg-slate-900/90 backdrop-blur-md">
             <div class="flex items-center gap-2">
                 <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-sm font-bold text-white">Revisão do Registro Técnico</span>
+                <span class="text-sm font-bold text-white" data-i18n="review_title">Revisão do Registro Técnico</span>
             </div>
             <button id="btnCloseReview" class="text-slate-400 hover:text-white p-2 cursor-pointer">✕</button>
         </div>
@@ -213,7 +221,7 @@ $v = time();
                 <div class="mt-3 w-full flex flex-col sm:flex-row items-center justify-center gap-2">
                     <button id="btnOpenMarkupModal" type="button" class="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        <span>✏️ Ferramentas de Desenho & Blur (Seta, Texto, Círculo...)</span>
+                        <span data-i18n="review_btn_markup">✏️ Ferramentas de Desenho & Blur (Seta, Texto, Círculo...)</span>
                     </button>
                     <span id="markupCountBadge" class="hidden text-[11px] font-bold px-3 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 shrink-0">0 anotações</span>
                 </div>
@@ -222,60 +230,60 @@ $v = time();
             <!-- FORMULÁRIO DE DADOS TÉCNICOS DA OBRA -->
             <div class="w-full bg-slate-900/80 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
                 <div class="flex items-center justify-between border-b border-white/10 pb-2">
-                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Dados do Registro</h3>
-                    <span class="text-[10px] text-slate-400">Preencha ou confirme</span>
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400" data-i18n="review_data_title">Dados do Registro</h3>
+                    <span class="text-[10px] text-slate-400" data-i18n="review_data_subtitle">Preencha ou confirme</span>
                 </div>
                 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1 font-semibold">Local / Estaca / Km</label>
+                        <label class="block text-xs text-slate-400 mb-1 font-semibold" data-i18n="review_field_station">Local / Estaca / Km</label>
                         <input type="text" id="reviewEstaca" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                     </div>
 
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1 font-semibold">Elemento / Estrutura</label>
+                        <label class="block text-xs text-slate-400 mb-1 font-semibold" data-i18n="review_field_element">Elemento / Estrutura</label>
                         <input type="text" id="reviewElemento" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-semibold">Classificação Técnica</label>
+                    <label class="block text-xs text-slate-400 mb-1 font-semibold" data-i18n="review_field_status">Classificação Técnica</label>
                     <div class="grid grid-cols-3 gap-2">
                         <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 text-xs font-semibold cursor-pointer">
                             <input type="radio" name="reviewStatus" value="CONFORME" checked class="accent-emerald-400">
-                            <span>Conforme</span>
+                            <span data-i18n="status_conforme">Conforme</span>
                         </label>
                         <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-300 text-xs font-semibold cursor-pointer">
                             <input type="radio" name="reviewStatus" value="OBSERVACAO" class="accent-amber-400">
-                            <span>Atenção</span>
+                            <span data-i18n="status_observacao">Atenção</span>
                         </label>
                         <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 text-xs font-semibold cursor-pointer">
                             <input type="radio" name="reviewStatus" value="NAO_CONFORME" class="accent-red-400">
-                            <span>RNC</span>
+                            <span data-i18n="status_rnc">RNC</span>
                         </label>
                     </div>
                 </div>
 
                 <div>
-                    <label class="block text-xs text-slate-400 mb-1 font-semibold">Observações Técnicas</label>
-                    <textarea id="reviewNotas" rows="2" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400" placeholder="Ex: Armadura conforme projeto estrutural NBR 6118, recobrimento validado em 35mm."></textarea>
+                    <label class="block text-xs text-slate-400 mb-1 font-semibold" data-i18n="review_field_notes">Observações Técnicas</label>
+                    <textarea id="reviewNotas" rows="2" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400" placeholder="Ex: Armadura conforme projeto estrutural NBR 6118, recobrimento validado em 35mm." data-i18n-placeholder="review_notes_placeholder"></textarea>
                 </div>
 
                 <button id="btnReapplyStamp" class="w-full py-2.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold transition-all">
-                    🔄 Recarimbar com Novos Dados
+                    <span data-i18n="review_btn_reapply">🔄 Recarimbar com Novos Dados</span>
                 </button>
 
                 <!-- Ações de Gravação e Compartilhamento -->
                 <div class="space-y-2 pt-3 border-t border-white/10">
                     <button id="btnSaveToGallery" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                        <span>💾 Salvar Registro na Galeria</span>
+                        <span data-i18n="review_btn_save">💾 Salvar Registro na Galeria</span>
                     </button>
                     <div class="grid grid-cols-2 gap-2">
                         <button id="btnDownloadPhoto" class="py-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-                            <span>⬇️ Baixar JPG</span>
+                            <span data-i18n="review_btn_download">⬇️ Baixar JPG</span>
                         </button>
                         <button id="btnSharePhoto" class="py-2.5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer">
-                            <span>📤 WhatsApp</span>
+                            <span data-i18n="review_btn_share">📤 WhatsApp</span>
                         </button>
                     </div>
                 </div>
@@ -288,12 +296,12 @@ $v = time();
         <div class="p-4 border-b border-white/10 flex items-center justify-between">
             <div class="flex items-center gap-2">
                 <span class="text-lg">📁</span>
-                <h2 class="text-base font-bold text-white">Galeria de Evidências Técnicas</h2>
+                <h2 class="text-base font-bold text-white" data-i18n="gallery_title">Galeria de Evidências Técnicas</h2>
                 <span id="galleryCounterText" class="text-xs text-slate-400 font-telemetry">(0 registros)</span>
             </div>
             <div class="flex items-center gap-2">
-                <button id="btnSelectAllGallery" class="text-xs text-amber-400 border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 rounded-lg">Selecionar Todas</button>
-                <button id="btnCloseGallery" class="text-slate-400 hover:text-white p-2">✕</button>
+                <button id="btnSelectAllGallery" class="text-xs text-amber-400 border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 rounded-lg cursor-pointer" data-i18n="gallery_select_all">Selecionar Todas</button>
+                <button id="btnCloseGallery" class="text-slate-400 hover:text-white p-2 cursor-pointer">✕</button>
             </div>
         </div>
 
@@ -304,22 +312,22 @@ $v = time();
             </div>
             <div id="galleryEmptyState" class="hidden flex flex-col items-center justify-center py-20 text-center">
                 <span class="text-5xl mb-3">📷</span>
-                <p class="text-base font-semibold text-white">Nenhum registro ainda</p>
-                <p class="text-xs text-slate-400 mt-1">Dispare fotos com a câmera técnica para montar seu acervo de laudos.</p>
+                <p class="text-base font-semibold text-white" data-i18n="gallery_empty_title">Nenhum registro ainda</p>
+                <p class="text-xs text-slate-400 mt-1" data-i18n="gallery_empty_desc">Dispare fotos com a câmera técnica para montar seu acervo de laudos.</p>
             </div>
         </div>
 
         <!-- Rodapé da Galeria com Ação de PDF -->
         <div class="p-3 sm:p-4 bg-slate-900 border-t border-white/10 flex items-center justify-between gap-3">
             <div class="text-xs text-slate-300">
-                <span id="selectedPhotosCount">0</span> fotos selecionadas
+                <span id="selectedPhotosCount">0</span> <span data-i18n="gallery_selected_label">fotos selecionadas</span>
             </div>
             <div class="flex items-center gap-2">
-                <button id="btnDeleteSelected" class="px-3 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-all">
+                <button id="btnDeleteSelected" class="px-3 py-2 rounded-xl border border-red-500/30 bg-red-500/10 text-red-400 text-xs font-semibold hover:bg-red-500/20 transition-all cursor-pointer" data-i18n="gallery_delete_selected">
                     Excluir
                 </button>
-                <button id="btnExportSelectedToPdf" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 flex items-center gap-2">
-                    <span>Exportar Relatório PDF</span>
+                <button id="btnExportSelectedToPdf" class="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white text-xs font-bold shadow-lg shadow-emerald-500/20 flex items-center gap-2 cursor-pointer">
+                    <span data-i18n="gallery_export_pdf">Exportar Relatório PDF</span>
                 </button>
             </div>
         </div>
@@ -331,49 +339,49 @@ $v = time();
             <div class="flex items-center justify-between border-b border-white/10 pb-3">
                 <div class="flex items-center gap-2">
                     <span class="text-emerald-400 text-xl">📄</span>
-                    <h3 class="text-base font-bold text-white">Gerar Relatório Fotográfico (PDF)</h3>
+                    <h3 class="text-base font-bold text-white" data-i18n="pdf_modal_title">Gerar Relatório Fotográfico (PDF)</h3>
                 </div>
-                <button id="btnClosePdfModal" class="text-slate-400 hover:text-white text-lg">✕</button>
+                <button id="btnClosePdfModal" class="text-slate-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
 
             <div class="space-y-3 text-xs">
                 <div>
-                    <label class="block text-slate-400 mb-1">Título do Relatório / Laudo</label>
+                    <label class="block text-slate-400 mb-1" data-i18n="pdf_field_title">Título do Relatório / Laudo</label>
                     <input type="text" id="pdfReportTitle" value="Relatório Fotográfico de Fiscalização de Obra" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white focus:outline-none focus:border-emerald-400">
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-slate-400 mb-1">Obra / Concessionária</label>
+                        <label class="block text-slate-400 mb-1" data-i18n="pdf_field_obra">Obra / Concessionária</label>
                         <input type="text" id="pdfReportObra" value="Praça de Pedágio P02 - Km 84" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-400 mb-1">Engenheiro / Fiscal</label>
+                        <label class="block text-slate-400 mb-1" data-i18n="pdf_field_fiscal">Engenheiro / Fiscal</label>
                         <input type="text" id="pdfReportFiscal" value="Eng. Fabiano Braga" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white">
                     </div>
                 </div>
                 <div class="grid grid-cols-2 gap-2">
                     <div>
-                        <label class="block text-slate-400 mb-1">CREA / CAU</label>
+                        <label class="block text-slate-400 mb-1" data-i18n="pdf_field_crea">CREA / CAU</label>
                         <input type="text" id="pdfReportCrea" placeholder="Ex: CREA/SP 506070" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white">
                     </div>
                     <div>
-                        <label class="block text-slate-400 mb-1">Layout da Página</label>
+                        <label class="block text-slate-400 mb-1" data-i18n="pdf_field_per_page">Layout da Página</label>
                         <select id="pdfPhotosPerPage" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white">
-                            <option value="2">2 Fotos por Página (Laudo Detalhado)</option>
-                            <option value="4">4 Fotos por Página (Vistoria Rápida)</option>
+                            <option value="2" data-i18n="pdf_opt_2_photos">2 Fotos por Página (Laudo Detalhado)</option>
+                            <option value="4" data-i18n="pdf_opt_4_photos">4 Fotos por Página (Vistoria Rápida)</option>
                         </select>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1">Observações Gerais do Laudo</label>
-                    <textarea id="pdfReportObs" rows="2" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white" placeholder="Vistoria técnica de rotina e acompanhamento das etapas executivas."></textarea>
+                    <label class="block text-slate-400 mb-1" data-i18n="pdf_field_obs">Observações Gerais do Laudo</label>
+                    <textarea id="pdfReportObs" rows="2" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white" placeholder="Vistoria técnica de rotina e acompanhamento das etapas executivas." data-i18n-placeholder="pdf_obs_placeholder"></textarea>
                 </div>
             </div>
 
             <div class="pt-3 border-t border-white/10 flex justify-end gap-2">
-                <button id="btnCancelPdf" class="px-4 py-2.5 rounded-xl border border-white/10 text-slate-300 text-xs">Cancelar</button>
-                <button id="btnGeneratePdfAction" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-1.5">
-                    <span>Gerar e Baixar PDF</span>
+                <button id="btnCancelPdf" class="px-4 py-2.5 rounded-xl border border-white/10 text-slate-300 text-xs cursor-pointer" data-i18n="pdf_btn_cancel">Cancelar</button>
+                <button id="btnGeneratePdfAction" class="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 flex items-center gap-1.5 cursor-pointer">
+                    <span data-i18n="pdf_btn_generate">Gerar e Baixar PDF</span>
                 </button>
             </div>
         </div>
@@ -385,55 +393,92 @@ $v = time();
             <div class="flex items-center justify-between border-b border-white/10 pb-3">
                 <div class="flex items-center gap-2">
                     <span class="text-amber-400 text-xl">⚙️</span>
-                    <h3 class="text-base font-bold text-white">Configurações do FotoLaudo</h3>
+                    <h3 class="text-base font-bold text-white" data-i18n="settings_title">Configurações do FotoLaudo</h3>
                 </div>
-                <button id="btnCloseSettings" class="text-slate-400 hover:text-white text-lg">✕</button>
+                <button id="btnCloseSettings" class="text-slate-400 hover:text-white text-lg cursor-pointer">✕</button>
             </div>
 
             <div class="space-y-3.5 text-xs">
                 <div>
-                    <label class="block text-slate-400 mb-1">Nome da Obra Ativa</label>
+                    <label class="block text-slate-400 mb-1" data-i18n="cfg_obra_label">Nome da Obra Ativa</label>
                     <input type="text" id="cfgObraName" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white">
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1">Contratante / Concessionária</label>
+                    <label class="block text-slate-400 mb-1" data-i18n="cfg_empresa_label">Contratante / Concessionária</label>
                     <input type="text" id="cfgEmpresa" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white">
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1">Responsável Técnico (Fiscal)</label>
+                    <label class="block text-slate-400 mb-1" data-i18n="cfg_fiscal_label">Responsável Técnico (Fiscal)</label>
                     <input type="text" id="cfgFiscalName" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white">
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1">Estilo do Carimbo Técnico</label>
+                    <label class="block text-slate-400 mb-1" data-i18n="cfg_stamp_style_label">Estilo do Carimbo Técnico</label>
                     <select id="cfgStampStyle" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white">
-                        <option value="concessao">Rodovias & Concessão (Faixa Preta Alto Contraste)</option>
-                        <option value="laudo">Laudo Duplo com Mini-Mapa Geográfico</option>
-                        <option value="minimalista">Minimalista de Engenharia (Cantos)</option>
+                        <option value="concessao" data-i18n="opt_concessao">Rodovias & Concessão (Faixa Preta Alto Contraste)</option>
+                        <option value="laudo" data-i18n="opt_laudo">Laudo Duplo com Mini-Mapa Geográfico</option>
+                        <option value="minimalista" data-i18n="opt_minimalista">Minimalista de Engenharia (Cantos)</option>
                     </select>
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1">Logotipo da Empresa (Aparece no carimbo)</label>
+                    <label class="block text-slate-400 mb-1" data-i18n="cfg_logo_label">Logotipo da Empresa (Aparece no carimbo)</label>
                     <div class="flex items-center gap-3">
                         <div id="cfgLogoPreviewBox" class="w-14 h-14 rounded-xl bg-black/40 border border-white/10 flex items-center justify-center overflow-hidden">
-                            <span class="text-slate-500 text-xs">Sem logo</span>
+                            <span class="text-slate-500 text-xs" data-i18n="cfg_no_logo">Sem logo</span>
                         </div>
                         <div class="flex-1 flex gap-2">
                             <label class="px-3 py-2 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white font-medium text-xs cursor-pointer">
-                                Carregar Logo
+                                <span data-i18n="cfg_upload_logo">Carregar Logo</span>
                                 <input type="file" id="cfgLogoFile" accept="image/*" class="hidden">
                             </label>
-                            <button id="cfgRemoveLogoBtn" class="px-3 py-2 rounded-xl border border-white/10 text-slate-400 text-xs hover:text-red-400">Remover</button>
+                            <button id="cfgRemoveLogoBtn" class="px-3 py-2 rounded-xl border border-white/10 text-slate-400 text-xs hover:text-red-400 cursor-pointer" data-i18n="cfg_remove_logo">Remover</button>
                         </div>
                     </div>
                 </div>
                 <div>
-                    <label class="block text-slate-400 mb-1">Tags Rápidas (separadas por vírgula)</label>
+                    <label class="block text-slate-400 mb-1" data-i18n="cfg_tags_label">Tags Rápidas (separadas por vírgula)</label>
                     <input type="text" id="cfgQuickTags" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-white" value="Cabine Manual, Cabine Automática, Pavimento Rígido, Armadura, Barreira New Jersey, Drenagem, Subestação, Cobertura">
+                </div>
+
+                <!-- Apoio e Doação PayPal -->
+                <div class="p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-amber-500/5 to-transparent border border-amber-500/25 flex flex-col gap-2">
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1.5 text-amber-400 font-bold text-xs">
+                            <span>☕</span>
+                            <span data-i18n="cfg_donate_title">Apoie o FotoLaudo</span>
+                        </div>
+                        <span class="text-[10px] text-amber-300/80 bg-amber-500/20 px-2 py-0.5 rounded-full font-semibold" data-i18n="cfg_donate_badge">Voluntário</span>
+                    </div>
+                    <p class="text-[11px] text-slate-300 leading-relaxed" data-i18n="cfg_donate_desc">
+                        O FotoLaudo é 100% gratuito e independente. Se este app te ajuda ou economizou seu dia em vistorias, considere fazer uma contribuição voluntária para mantermos o projeto ativo!
+                    </p>
+                    <a href="https://www.paypal.com/ncp/payment/L7YRCS984T33N" target="_blank" rel="noopener noreferrer" class="w-full py-2 px-3 rounded-lg bg-[#0070BA] hover:bg-[#005ea6] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md transition-all active:scale-98">
+                        <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24"><path d="M7.076 21.337H2.47a.641.641 0 0 1-.633-.74L4.944 3.72a.78.78 0 0 1 .77-.655h6.702c2.22 0 3.99.53 5.258 1.576 1.258 1.037 1.83 2.508 1.7 4.373-.176 2.535-1.34 4.545-3.46 5.975-2.072 1.398-4.78 2.107-8.05 2.107H6.55l-1.34 7.236a.64.64 0 0 0 .633.74h1.233z"/></svg>
+                        <span data-i18n="cfg_donate_btn">Doar via PayPal</span>
+                    </a>
+                </div>
+
+                <!-- Links Oficiais do Ecossistema 4U.IA.BR -->
+                <div class="pt-2 border-t border-white/10 space-y-1.5">
+                    <div class="text-[11px] font-semibold text-slate-400" data-i18n="cfg_official_links">Páginas Oficiais:</div>
+                    <div class="grid grid-cols-2 gap-1.5 text-[11px]">
+                        <a href="tutorial.php" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-amber-400 border border-white/5 flex items-center gap-1.5 transition-all">
+                            <span>📖</span> <span data-i18n="link_tutorial">Tutorial &amp; Guia</span>
+                        </a>
+                        <a href="suporte.php" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-cyan-300 border border-white/5 flex items-center gap-1.5 transition-all">
+                            <span>💬</span> <span data-i18n="link_support">Suporte &amp; FAQ</span>
+                        </a>
+                        <a href="privacidade.php" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-emerald-400 border border-white/5 flex items-center gap-1.5 transition-all">
+                            <span>🔒</span> <span data-i18n="link_privacy">Privacidade &amp; LGPD</span>
+                        </a>
+                        <a href="termos.php" target="_blank" rel="noopener noreferrer" class="p-2 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 hover:text-amber-300 border border-white/5 flex items-center gap-1.5 transition-all">
+                            <span>📜</span> <span data-i18n="link_terms">Termos de Uso</span>
+                        </a>
+                    </div>
                 </div>
             </div>
 
             <div class="pt-3 border-t border-white/10 flex justify-end gap-2">
-                <button id="btnSaveSettings" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95">
+                <button id="btnSaveSettings" class="w-full py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95" data-i18n="cfg_btn_save">
                     Salvar Configurações
                 </button>
             </div>
@@ -447,24 +492,24 @@ $v = time();
             <!-- Título Compacto -->
             <div class="flex items-center gap-1.5 shrink min-w-0">
                 <span class="text-amber-400 text-base sm:text-lg shrink-0">✏️</span>
-                <span class="text-xs sm:text-sm font-bold text-white truncate">Desenho</span>
+                <span class="text-xs sm:text-sm font-bold text-white truncate" data-i18n="markup_title">Desenho</span>
             </div>
 
             <!-- Botões de Ação Super Compactos -->
             <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
                 <button id="btnMarkupDeleteSelected" class="hidden px-2 sm:px-2.5 py-1.5 rounded-lg border border-red-500/40 bg-red-500/20 hover:bg-red-500/30 text-xs font-bold text-red-300 flex items-center gap-1 active:scale-95 transition-all cursor-pointer shrink-0" title="Excluir marcação selecionada">
                     <span>🗑️</span>
-                    <span class="hidden sm:inline">Excluir</span>
+                    <span class="hidden sm:inline" data-i18n="markup_btn_delete">Excluir</span>
                 </button>
                 <button id="btnMarkupUndo" class="px-2 sm:px-2.5 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-200 flex items-center gap-1 active:scale-95 transition-all cursor-pointer shrink-0" title="Desfazer última anotação">
                     <span>↩️</span>
-                    <span class="hidden sm:inline">Desfazer</span>
+                    <span class="hidden sm:inline" data-i18n="markup_btn_undo">Desfazer</span>
                 </button>
                 <button id="btnMarkupClear" class="px-2 sm:px-2.5 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-300 flex items-center gap-1 active:scale-95 transition-all cursor-pointer shrink-0" title="Limpar todas as anotações">
-                    <span>Limpar</span>
+                    <span data-i18n="markup_btn_clear">Limpar</span>
                 </button>
                 <button id="btnMarkupApply" class="px-2.5 sm:px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer shrink-0" title="Salvar Anotações">
-                    <span>✓ Concluir</span>
+                    <span data-i18n="markup_btn_apply">✓ Concluir</span>
                 </button>
                 <button id="btnMarkupCancel" class="text-slate-400 hover:text-white px-1.5 py-1 text-base cursor-pointer shrink-0" title="Fechar">✕</button>
             </div>
@@ -481,35 +526,35 @@ $v = time();
             <div id="markupToolsBar" class="flex items-center gap-1 sm:gap-1.5 overflow-x-auto w-full pb-1 no-scrollbar touch-pan-x">
                 <button type="button" data-tool="select" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-bold flex items-center gap-1 border border-cyan-500/50 bg-cyan-500/25 text-cyan-300 shadow-md transition-all cursor-pointer" title="Selecionar e Mover/Redimensionar Marcações">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 3l6 15 2-6 6-2L5 3z"/></svg>
-                    <span>Mover</span>
+                    <span data-i18n="tool_select">Mover</span>
                 </button>
                 <button type="button" data-tool="arrow" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
-                    <span>Seta</span>
+                    <span data-i18n="tool_arrow">Seta</span>
                 </button>
                 <button type="button" data-tool="dimension" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer" title="Cota Técnica com Medição">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="3" y2="18"/><line x1="21" y1="6" x2="21" y2="18"/><polyline points="7 9 3 12 7 15"/><polyline points="17 9 21 12 17 15"/></svg>
-                    <span>Cota</span>
+                    <span data-i18n="tool_dimension">Cota</span>
                 </button>
                 <button type="button" data-tool="pen" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                    <span>Traço</span>
+                    <span data-i18n="tool_pen">Traço</span>
                 </button>
                 <button type="button" data-tool="blur" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer" title="Desfocar / Censurar Placas e Rostos">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
-                    <span>Blur</span>
+                    <span data-i18n="tool_blur">Blur</span>
                 </button>
                 <button type="button" data-tool="text" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
-                    <span>Texto</span>
+                    <span data-i18n="tool_text">Texto</span>
                 </button>
                 <button type="button" data-tool="circle" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
-                    <span>Círculo</span>
+                    <span data-i18n="tool_circle">Círculo</span>
                 </button>
                 <button type="button" data-tool="rect" class="markup-tool-btn shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                    <span>Quadrado</span>
+                    <span data-i18n="tool_rect">Quadrado</span>
                 </button>
             </div>
 
@@ -517,7 +562,7 @@ $v = time();
             <div class="flex items-center justify-between w-full gap-2 shrink-0 px-0.5">
                 <!-- Seletor de Cores Técnicas com Rótulo e Bolinhas Coloridas Visíveis -->
                 <div class="flex items-center gap-1 sm:gap-1.5 shrink-0">
-                    <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0">Cor:</span>
+                    <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-slate-400 shrink-0" data-i18n="markup_label_color">Cor:</span>
                     <div class="flex items-center gap-1 sm:gap-1.5">
                         <button type="button" data-color="#EF4444" style="background-color: #EF4444;" class="markup-color-btn relative w-6 h-6 rounded-full border border-white/20 hover:scale-105 transition-all cursor-pointer" title="Vermelho RNC / Falha"></button>
                         <button type="button" data-color="#F59E0B" style="background-color: #F59E0B;" class="markup-color-btn relative w-6 h-6 rounded-full border border-white/20 hover:scale-105 transition-all cursor-pointer" title="Amarelo Atenção"></button>
@@ -529,9 +574,9 @@ $v = time();
 
                 <!-- Espessura do Traço com Rótulo ou Compacto -->
                 <div class="flex items-center gap-0.5 bg-black/40 p-0.5 rounded-xl border border-white/10 shrink-0">
-                    <button type="button" data-size="4" class="markup-size-btn px-2 py-1 rounded-lg text-[11px] text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer">Fino</button>
-                    <button type="button" data-size="8" class="markup-size-btn px-2 py-1 rounded-lg text-[11px] text-amber-300 font-bold border border-amber-500/50 bg-amber-500/25 cursor-pointer">Médio</button>
-                    <button type="button" data-size="14" class="markup-size-btn px-2 py-1 rounded-lg text-[11px] text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer">Grosso</button>
+                    <button type="button" data-size="4" class="markup-size-btn px-2 py-1 rounded-lg text-[11px] text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer" data-i18n="size_fine">Fino</button>
+                    <button type="button" data-size="8" class="markup-size-btn px-2 py-1 rounded-lg text-[11px] text-amber-300 font-bold border border-amber-500/50 bg-amber-500/25 cursor-pointer" data-i18n="size_medium">Médio</button>
+                    <button type="button" data-size="14" class="markup-size-btn px-2 py-1 rounded-lg text-[11px] text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer" data-i18n="size_thick">Grosso</button>
                 </div>
             </div>
         </div>
@@ -543,36 +588,36 @@ $v = time();
             <div class="flex items-center justify-between border-b border-white/10 pb-2">
                 <div class="flex items-center gap-2">
                     <span class="text-amber-400 text-lg">🏷️</span>
-                    <h3 class="text-sm font-bold text-white">Rótulo Técnico de Campo</h3>
+                    <h3 class="text-sm font-bold text-white" data-i18n="text_modal_title">Rótulo Técnico de Campo</h3>
                 </div>
                 <button id="btnCancelTextInput" type="button" class="text-slate-400 hover:text-white p-1 text-base cursor-pointer">✕</button>
             </div>
 
             <div>
-                <label class="block text-xs text-slate-300 font-semibold mb-1.5">Texto do Destaque:</label>
-                <input type="text" id="textInputContent" class="w-full rounded-xl bg-black/60 border border-white/20 px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-amber-400" placeholder="Ex: FISSURA 0.3mm">
+                <label class="block text-xs text-slate-300 font-semibold mb-1.5" data-i18n="text_modal_label">Texto do Destaque:</label>
+                <input type="text" id="textInputContent" class="w-full rounded-xl bg-black/60 border border-white/20 px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-amber-400" placeholder="Ex: FISSURA 0.3mm" data-i18n-placeholder="text_modal_placeholder">
             </div>
 
             <!-- Atalhos Técnicos com 1 toque -->
             <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1.5">Atalhos Frequentes de Obras & Infraestrutura:</label>
+                <label class="block text-[11px] text-slate-400 font-medium mb-1.5" data-i18n="text_modal_shortcuts">Atalhos Frequentes de Obras & Infraestrutura:</label>
                 <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
-                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Fissura / Trinca</button>
-                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Armadura Exposta</button>
-                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Infiltração / Umidade</button>
-                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Desaprumo</button>
-                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Falha Concretagem</button>
-                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Medição / Cota</button>
-                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">RNC / Falha Crítica</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer" data-i18n="chip_fissura">Fissura / Trinca</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer" data-i18n="chip_armadura">Armadura Exposta</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer" data-i18n="chip_infiltracao">Infiltração / Umidade</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer" data-i18n="chip_desaprumo">Desaprumo</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer" data-i18n="chip_concretagem">Falha Concretagem</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer" data-i18n="chip_medicao">Medição / Cota</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer" data-i18n="chip_rnc">RNC / Falha Crítica</button>
                 </div>
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
-                <button id="btnDismissTextInput" type="button" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold cursor-pointer">
+                <button id="btnDismissTextInput" type="button" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold cursor-pointer" data-i18n="text_btn_cancel">
                     Cancelar
                 </button>
                 <button id="btnConfirmTextInput" type="button" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/25 active:scale-95 transition-all cursor-pointer">
-                    ✓ Inserir & Mover
+                    <span data-i18n="text_btn_apply">✓ Inserir & Mover</span>
                 </button>
             </div>
         </div>
@@ -584,19 +629,19 @@ $v = time();
             <div class="flex items-center justify-between border-b border-white/10 pb-2">
                 <div class="flex items-center gap-2">
                     <span class="text-amber-400 text-lg">📏</span>
-                    <h3 class="text-sm font-bold text-white">Cota Técnica / Medição</h3>
+                    <h3 class="text-sm font-bold text-white" data-i18n="dim_modal_title">Cota Técnica / Medição</h3>
                 </div>
                 <button id="btnCancelDimensionInput" type="button" class="text-slate-400 hover:text-white p-1 text-base cursor-pointer">✕</button>
             </div>
 
             <div>
-                <label class="block text-xs text-slate-300 font-semibold mb-1.5">Valor da Medida (com unidade):</label>
-                <input type="text" id="dimensionInputContent" class="w-full rounded-xl bg-black/60 border border-white/20 px-3.5 py-2.5 text-base text-white font-mono font-bold focus:outline-none focus:border-amber-400" placeholder="Ex: 25 cm, 1.50 m, 2 mm">
+                <label class="block text-xs text-slate-300 font-semibold mb-1.5" data-i18n="dim_modal_label">Valor da Medida (com unidade):</label>
+                <input type="text" id="dimensionInputContent" class="w-full rounded-xl bg-black/60 border border-white/20 px-3.5 py-2.5 text-base text-white font-mono font-bold focus:outline-none focus:border-amber-400" placeholder="Ex: 25 cm, 1.50 m, 2 mm" data-i18n-placeholder="dim_modal_placeholder">
             </div>
 
             <!-- Atalhos Técnicos com 1 toque para Medidas Rápidas -->
             <div>
-                <label class="block text-[11px] text-slate-400 font-medium mb-1.5">Atalhos Rápidos de Medição:</label>
+                <label class="block text-[11px] text-slate-400 font-medium mb-1.5" data-i18n="dim_modal_shortcuts">Atalhos Rápidos de Medição:</label>
                 <div class="grid grid-cols-4 gap-1.5">
                     <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">0.5 mm</button>
                     <button type="button" class="dim-chip px-2 py-1.5 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs font-mono font-bold border border-white/10 text-center transition-all cursor-pointer">1.0 mm</button>
@@ -614,17 +659,18 @@ $v = time();
             </div>
 
             <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
-                <button id="btnDismissDimensionInput" type="button" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold cursor-pointer">
+                <button id="btnDismissDimensionInput" type="button" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold cursor-pointer" data-i18n="dim_btn_cancel">
                     Cancelar
                 </button>
                 <button id="btnConfirmDimensionInput" type="button" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/25 active:scale-95 transition-all cursor-pointer">
-                    ✓ Aplicar Cota
+                    <span data-i18n="dim_btn_apply">✓ Aplicar Cota</span>
                 </button>
             </div>
         </div>
     </div>
 
     <!-- Scripts da Aplicação -->
+    <script src="i18n.js?v=<?php echo $v; ?>"></script>
     <script src="app.js?v=<?php echo $v; ?>"></script>
     <script>
         // Registro do Service Worker para suporte PWA offline

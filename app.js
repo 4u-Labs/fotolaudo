@@ -120,6 +120,12 @@
                 if (parsed.stampStyle) state.stampStyle = parsed.stampStyle;
                 if (parsed.customLogoUrl) state.customLogoUrl = parsed.customLogoUrl;
                 if (parsed.quickTags && Array.isArray(parsed.quickTags)) state.quickTags = parsed.quickTags;
+            } else if (window.FotoLaudoI18n && window.FotoLaudoI18n.getCurrentLang() === 'en') {
+                state.currentProject = 'Toll Plaza P02 - MP 84';
+                state.empresa = 'Highway Concession Authority';
+                state.fiscalName = 'Eng. Fabiano Braga';
+                state.activeTag = 'Manual Booth';
+                state.quickTags = window.FotoLaudoI18n.t('default_tags') || state.quickTags;
             }
         } catch (e) {
             console.warn('Erro ao carregar configurações salvas:', e);
@@ -411,7 +417,8 @@
             btnTorch?.classList.remove('text-amber-400', 'border-amber-500/50', 'bg-amber-500/20');
         }, 3500);
 
-        showToast('🔦 <strong>Iluminação para Fotos:</strong><br>Deslize o topo da tela do seu celular para baixo e ative a <strong>Lanterna nativa</strong> do aparelho!', 6000);
+        const msg = window.FotoLaudoI18n ? window.FotoLaudoI18n.t('torch_toast_msg') : '🔦 <strong>Iluminação para Fotos:</strong><br>Deslize o topo da tela do seu celular para baixo e ative a <strong>Lanterna nativa</strong> do aparelho!';
+        showToast(msg, 6000);
     }
 
     // Som de obturador sintético via Web Audio API (funciona offline e em qualquer navegador)
@@ -1205,7 +1212,7 @@
         // Etiqueta indicativa "ARRASTE OU PUXE AS ALÇAS"
         const tagFontSize = Math.max(11, Math.round(13 * sc));
         ctx.font = `bold ${tagFontSize}px "JetBrains Mono", Inter, sans-serif`;
-        const label = '👆 ARRASTE O ITEM OU PUXE AS ALÇAS ↔';
+        const label = window.FotoLaudoI18n ? window.FotoLaudoI18n.t('canvas_drag_hint') : '👆 ARRASTE O ITEM OU PUXE AS ALÇAS ↔';
         const lm = ctx.measureText(label);
         const tagH = tagFontSize + 8 * sc;
         const tagW = lm.width + 16 * sc;
@@ -2285,6 +2292,10 @@
 
             // Função de Cabeçalho Padrão de Engenharia
             function drawHeader(pageNum, totalPages) {
+                const t = (k, fb) => (window.FotoLaudoI18n ? window.FotoLaudoI18n.t(k, fb) : fb);
+                const lang = window.FotoLaudoI18n ? window.FotoLaudoI18n.getCurrentLang() : 'pt';
+                const locale = lang === 'en' ? 'en-US' : 'pt-BR';
+
                 doc.setDrawColor(200, 200, 200);
                 doc.setLineWidth(0.4);
                 doc.rect(margin, margin, contentW, 25);
@@ -2297,20 +2308,27 @@
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(9);
                 doc.setTextColor(80, 90, 100);
-                doc.text(`OBRA: ${obra} | FISCAL: ${fiscal} (${crea})`, margin + 5, margin + 16);
-                doc.text(`DATA DE EMISSÃO: ${new Date().toLocaleDateString('pt-BR')} ${new Date().toLocaleTimeString('pt-BR')}`, margin + 5, margin + 22);
+                doc.text(`${t('pdf_doc_project', 'OBRA')}: ${obra} | ${t('pdf_doc_inspector', 'FISCAL')}: ${fiscal} (${crea})`, margin + 5, margin + 16);
+                doc.text(`${t('pdf_doc_date', 'DATA DE EMISSÃO')}: ${new Date().toLocaleDateString(locale)} ${new Date().toLocaleTimeString(locale)}`, margin + 5, margin + 22);
 
                 doc.setFont('helvetica', 'italic');
                 doc.setFontSize(8);
-                doc.text(`Página ${pageNum}`, pageW - margin - 20, margin + 22);
+                doc.text(`${t('pdf_doc_page', 'Página')} ${pageNum}`, pageW - margin - 20, margin + 22);
+
+                if (state.customLogoUrl) {
+                    try {
+                        doc.addImage(state.customLogoUrl, 'PNG', pageW - margin - 35, margin + 2.5, 30, 20);
+                    } catch (e) {}
+                }
             }
 
             // Função de Rodapé com Assinatura
             function drawFooter() {
+                const t = (k, fb) => (window.FotoLaudoI18n ? window.FotoLaudoI18n.t(k, fb) : fb);
                 doc.setFont('helvetica', 'normal');
                 doc.setFontSize(8);
                 doc.setTextColor(100, 100, 100);
-                doc.text('Relatório emitido via FotoLaudo — 4U.IA.BR Tecnologia para Engenharia', margin, pageH - margin + 5);
+                doc.text(t('pdf_doc_footer', 'Relatório emitido via FotoLaudo — 4U.IA.BR Tecnologia para Engenharia'), margin, pageH - margin + 5);
             }
 
             // Calcular Páginas
@@ -2328,6 +2346,7 @@
                     // LAYOUT: 2 FOTOS POR PÁGINA
                     const slotHeight = 110;
                     chunk.forEach((p, idx) => {
+                        const t = (k, fb) => (window.FotoLaudoI18n ? window.FotoLaudoI18n.t(k, fb) : fb);
                         const topY = margin + 30 + idx * (slotHeight + 10);
 
                         // Moldura da Foto
@@ -2347,35 +2366,35 @@
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(11);
                         doc.setTextColor(20, 30, 60);
-                        doc.text(`REGISTRO FOTOGRÁFICO #${i + idx + 1}`, textX, textY);
+                        doc.text(`${t('pdf_doc_record', 'REGISTRO FOTOGRÁFICO')} #${i + idx + 1}`, textX, textY);
 
                         textY += 8;
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(9);
                         doc.setTextColor(60, 60, 60);
-                        doc.text('Elemento:', textX, textY);
+                        doc.text(t('pdf_doc_element', 'Elemento:'), textX, textY);
                         doc.setFont('helvetica', 'normal');
-                        doc.text(p.elemento, textX + 20, textY);
+                        doc.text(p.elemento, textX + 22, textY);
 
                         textY += 6;
                         doc.setFont('helvetica', 'bold');
-                        doc.text('Local/Estaca:', textX, textY);
+                        doc.text(t('pdf_doc_station', 'Local/Estaca:'), textX, textY);
                         doc.setFont('helvetica', 'normal');
-                        doc.text(p.estaca, textX + 24, textY);
+                        doc.text(p.estaca, textX + 26, textY);
 
                         textY += 6;
                         doc.setFont('helvetica', 'bold');
-                        doc.text('Status:', textX, textY);
+                        doc.text(t('pdf_doc_status', 'Status:'), textX, textY);
                         doc.setFont('helvetica', 'bold');
                         if (p.status === 'CONFORME') doc.setTextColor(16, 185, 129);
                         else if (p.status === 'OBSERVACAO') doc.setTextColor(245, 158, 11);
                         else doc.setTextColor(239, 68, 68);
-                        doc.text(p.status, textX + 16, textY);
+                        doc.text(p.status, textX + 18, textY);
 
                         textY += 8;
                         doc.setFont('helvetica', 'bold');
                         doc.setTextColor(60, 60, 60);
-                        doc.text('Telemetria de Campo:', textX, textY);
+                        doc.text(t('pdf_doc_telemetry', 'Telemetria de Campo:'), textX, textY);
                         textY += 5;
                         doc.setFont('courier', 'normal');
                         doc.setFontSize(8);
@@ -2403,6 +2422,7 @@
                     const boxH = 115;
 
                     chunk.forEach((p, idx) => {
+                        const t = (k, fb) => (window.FotoLaudoI18n ? window.FotoLaudoI18n.t(k, fb) : fb);
                         const col = idx % 2;
                         const row = Math.floor(idx / 2);
                         const posX = margin + col * (boxW + 6);
@@ -2418,13 +2438,13 @@
                         doc.setFont('helvetica', 'bold');
                         doc.setFontSize(9);
                         doc.setTextColor(20, 30, 60);
-                        doc.text(`Foto #${i + idx + 1}: ${p.elemento}`, posX + 4, textY);
+                        doc.text(`${t('pdf_doc_record', 'Foto')} #${i + idx + 1}: ${p.elemento}`, posX + 4, textY);
 
                         textY += 5;
                         doc.setFont('helvetica', 'normal');
                         doc.setFontSize(8);
                         doc.setTextColor(70, 70, 70);
-                        doc.text(`Local: ${p.estaca} | ${p.dataHora}`, posX + 4, textY);
+                        doc.text(`${t('pdf_doc_station', 'Local:')} ${p.estaca} | ${p.dataHora}`, posX + 4, textY);
 
                         textY += 4.5;
                         doc.setFont('courier', 'normal');
@@ -2739,11 +2759,41 @@
 
     // Inicialização Geral do App
     async function boot() {
+        if (window.FotoLaudoI18n) {
+            window.FotoLaudoI18n.initI18n();
+        }
         loadSavedSettings();
         await initDatabase();
         initSensors();
         bindEvents();
         await startCamera();
+
+        window.addEventListener('fotolaudo:langchange', (e) => {
+            const currentLang = e.detail?.lang || 'pt';
+            const saved = localStorage.getItem('fotolaudo_cfg_v1');
+            if (!saved) {
+                if (currentLang === 'en') {
+                    state.currentProject = 'Toll Plaza P02 - MP 84';
+                    state.empresa = 'Highway Concession Authority';
+                    state.fiscalName = 'Eng. Fabiano Braga';
+                    state.activeTag = 'Manual Booth';
+                    state.quickTags = window.FotoLaudoI18n.t('default_tags');
+                } else {
+                    state.currentProject = 'Praça de Pedágio P02 - Km 84';
+                    state.empresa = 'Concessionária Rodovias do Vale';
+                    state.fiscalName = 'Eng. Fabiano Braga';
+                    state.activeTag = 'Cabine Manual';
+                    state.quickTags = [
+                        'Cabine Manual', 'Cabine Automática', 'Pavimento Rígido',
+                        'Armadura', 'Barreira New Jersey', 'Drenagem',
+                        'Subestação', 'Cobertura Metálica', 'Laço Indutivo', 'Sinalização'
+                    ];
+                }
+                updateProjectBadge();
+            }
+            renderQuickChips();
+            drawCanvas();
+        });
     }
 
     window.addEventListener('DOMContentLoaded', boot);
