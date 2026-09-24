@@ -48,7 +48,7 @@
         },
         currentCapture: null, // dados da foto temporária em revisão
         markup: {
-            activeTool: 'arrow', // 'arrow', 'circle', 'rect', 'pen', 'text'
+            activeTool: 'arrow', // 'arrow', 'circle', 'rect', 'blur', 'pen', 'text'
             color: '#EF4444',
             lineWidth: 8,
             annotations: [],
@@ -683,6 +683,65 @@
         ctx.restore();
     }
 
+    function drawBlur(ctx, x, y, w, h, scale) {
+        if (!w || !h || Math.abs(w) < 4 || Math.abs(h) < 4) return;
+
+        const sc = scale || 1;
+        const x0 = Math.max(0, Math.min(x, x + w));
+        const y0 = Math.max(0, Math.min(y, y + h));
+        const sw = Math.min(Math.abs(w), ctx.canvas.width - x0);
+        const sh = Math.min(Math.abs(h), ctx.canvas.height - y0);
+
+        if (sw <= 0 || sh <= 0) return;
+
+        ctx.save();
+        try {
+            // Mosaico pixelado técnico de alta performance (sem bibliotecas externas)
+            const pixelSize = Math.max(6, Math.round(12 * sc));
+            const miniW = Math.max(1, Math.floor(sw / pixelSize));
+            const miniH = Math.max(1, Math.floor(sh / pixelSize));
+
+            const offCanvas = document.createElement('canvas');
+            offCanvas.width = miniW;
+            offCanvas.height = miniH;
+            const offCtx = offCanvas.getContext('2d');
+
+            // Amostra a área do canvas em baixa resolução
+            offCtx.drawImage(ctx.canvas, x0, y0, sw, sh, 0, 0, miniW, miniH);
+
+            // Redesenha ampliado no canvas principal com interpolação desligada (pixel mosaic)
+            ctx.imageSmoothingEnabled = false;
+            ctx.drawImage(offCanvas, 0, 0, miniW, miniH, x0, y0, sw, sh);
+            ctx.imageSmoothingEnabled = true;
+
+            // Borda técnica tracejada discreta em ciano/azul para indicar a área censurada
+            ctx.strokeStyle = '#00D2FF';
+            ctx.lineWidth = Math.max(1.5, 2 * sc);
+            ctx.setLineDash([6 * sc, 4 * sc]);
+            ctx.strokeRect(x0, y0, sw, sh);
+
+            // Rótulo discreto "BLUR" no canto
+            ctx.setLineDash([]);
+            const tagSize = Math.max(9, Math.round(11 * sc));
+            ctx.font = `bold ${tagSize}px "JetBrains Mono", Inter, sans-serif`;
+            const labelText = 'BLUR';
+            const textMetrics = ctx.measureText(labelText);
+            ctx.fillStyle = 'rgba(7, 11, 20, 0.75)';
+            ctx.fillRect(x0 + 2, y0 + 2, textMetrics.width + 6, tagSize + 4);
+            ctx.fillStyle = '#00D2FF';
+            ctx.textBaseline = 'top';
+            ctx.fillText(labelText, x0 + 5, y0 + 3);
+        } catch (e) {
+            // Fallback para tarja fosca caso canvas esteja restrito
+            ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
+            ctx.fillRect(x0, y0, sw, sh);
+            ctx.strokeStyle = '#00D2FF';
+            ctx.lineWidth = Math.max(1.5, 2 * sc);
+            ctx.strokeRect(x0, y0, sw, sh);
+        }
+        ctx.restore();
+    }
+
     function drawPen(ctx, points, color, lineWidth, scale) {
         if (!points || points.length < 2) return;
         ctx.save();
@@ -778,6 +837,9 @@
                 break;
             case 'rect':
                 drawRect(ctx, a.x, a.y, a.w, a.h, col, lw, scale);
+                break;
+            case 'blur':
+                drawBlur(ctx, a.x, a.y, a.w, a.h, scale);
                 break;
             case 'pen':
                 drawPen(ctx, a.points, col, lw, scale);
@@ -1274,14 +1336,14 @@
                     lineWidth: lw
                 };
             }
-        } else if (tool === 'rect') {
+        } else if (tool === 'rect' || tool === 'blur') {
             const rx = Math.min(sx, coords.x);
             const ry = Math.min(sy, coords.y);
             const rw = Math.abs(coords.x - sx);
             const rh = Math.abs(coords.y - sy);
             if (rw >= 3 || rh >= 3) {
                 state.markup.tempAnnotation = {
-                    type: 'rect',
+                    type: tool,
                     x: Math.round(rx),
                     y: Math.round(ry),
                     w: Math.round(rw),
@@ -1326,9 +1388,9 @@
         document.querySelectorAll('.markup-tool-btn').forEach(btn => {
             const tool = btn.dataset.tool;
             if (tool === state.markup.activeTool) {
-                btn.className = 'markup-tool-btn px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/50 bg-amber-500/25 text-amber-300 shadow-md transition-all cursor-pointer';
+                btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/50 bg-amber-500/25 text-amber-300 shadow-md transition-all cursor-pointer';
             } else {
-                btn.className = 'markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer';
+                btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer';
             }
         });
     }
@@ -1870,6 +1932,7 @@
         }
         makeHorizontalScrollable(document.getElementById('topToolsBar'));
         makeHorizontalScrollable(document.getElementById('quickChipsContainer'));
+        makeHorizontalScrollable(document.getElementById('markupToolsBar'));
 
         // Modal de Galeria
         document.getElementById('btnOpenGallery')?.addEventListener('click', openGalleryModal);

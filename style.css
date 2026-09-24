@@ -315,4 +315,19 @@ input, textarea, select {
   transition: opacity 0.2s ease-in-out;
 }
 
+/* Rolagem vertical fluida para o Modal de Revisão Técnica */
+#modalReviewPhoto .overflow-y-auto {
+  -webkit-overflow-scrolling: touch;
+  touch-action: pan-y;
+  overscroll-behavior-y: contain;
+  scroll-behavior: smooth;
+}
+
+/* Rolagem horizontal dos botões do editor de anotações */
+#markupToolsBar {
+  touch-action: pan-x;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+
 

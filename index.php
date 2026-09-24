@@ -187,77 +187,86 @@ $v = time();
          ============================================================ -->
 
     <!-- MODAL 1: REVISÃO DA FOTO RECÉM-CAPTURADA -->
-    <div id="modalReviewPhoto" class="hidden fixed inset-0 z-50 bg-black/90 backdrop-blur-xl flex flex-col">
-        <div class="p-3 border-b border-white/10 flex items-center justify-between">
+    <div id="modalReviewPhoto" class="hidden fixed inset-0 z-50 bg-black/95 backdrop-blur-xl flex flex-col">
+        <!-- Header fixo no topo -->
+        <div class="p-3 border-b border-white/10 flex items-center justify-between shrink-0 bg-slate-900/90 backdrop-blur-md">
             <div class="flex items-center gap-2">
-                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400"></span>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
                 <span class="text-sm font-bold text-white">Revisão do Registro Técnico</span>
             </div>
-            <button id="btnCloseReview" class="text-slate-400 hover:text-white p-2">✕</button>
+            <button id="btnCloseReview" class="text-slate-400 hover:text-white p-2 cursor-pointer">✕</button>
         </div>
 
-        <div class="flex-1 overflow-y-auto p-4 flex flex-col lg:flex-row gap-4 max-w-6xl mx-auto w-full">
-            <!-- Imagem com Carimbo e Ação de Anotação -->
-            <div class="flex-1 flex flex-col items-center justify-center bg-black/60 rounded-2xl overflow-hidden border border-white/10 p-3">
-                <div class="relative max-h-[58vh] lg:max-h-[72vh] flex items-center justify-center">
-                    <img id="reviewImgPreview" class="max-h-[58vh] lg:max-h-[72vh] w-auto object-contain rounded-xl shadow-2xl" alt="Foto Carimbada">
+        <!-- Área com rolagem vertical livre (touch-pan-y, -webkit-overflow-scrolling: touch) -->
+        <div class="flex-1 overflow-y-auto p-3 sm:p-4 space-y-4 max-w-5xl mx-auto w-full touch-pan-y">
+            
+            <!-- CARD DA FOTO: Visualização ampla e nítida -->
+            <div class="w-full flex flex-col items-center bg-black/80 rounded-2xl border border-white/10 p-3 shadow-2xl">
+                <!-- Imagem com altura ideal para ver o carimbo e o assunto -->
+                <div class="w-full max-h-[46vh] sm:max-h-[55vh] flex items-center justify-center overflow-hidden rounded-xl bg-black">
+                    <img id="reviewImgPreview" class="max-h-[46vh] sm:max-h-[55vh] w-auto max-w-full object-contain rounded-xl shadow-2xl" alt="Foto Carimbada">
                 </div>
-                <div class="mt-3 flex items-center gap-2">
-                    <button id="btnOpenMarkupModal" type="button" class="px-4 py-2.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center gap-2 cursor-pointer">
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                        <span>Anotar na Foto (Setas, Círculos, Textos)</span>
+
+                <!-- BOTÃO DE DESTAQUE: ABRIR EDITOR DE ANOTAÇÕES (Seta, Círculo, Blur, Texto, Traço, Quadrado) -->
+                <div class="mt-3 w-full flex flex-col sm:flex-row items-center justify-center gap-2">
+                    <button id="btnOpenMarkupModal" type="button" class="w-full sm:w-auto px-5 py-3.5 rounded-xl bg-gradient-to-r from-amber-500 via-amber-400 to-amber-500 hover:from-amber-400 hover:to-amber-300 text-slate-950 font-black text-xs sm:text-sm shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer uppercase tracking-wider">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                        <span>✏️ Ferramentas de Desenho & Blur (Seta, Texto, Círculo...)</span>
                     </button>
-                    <span id="markupCountBadge" class="hidden text-[11px] font-bold px-2.5 py-1 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300">0 anotações</span>
+                    <span id="markupCountBadge" class="hidden text-[11px] font-bold px-3 py-1.5 rounded-full bg-cyan-500/20 border border-cyan-500/40 text-cyan-300 shrink-0">0 anotações</span>
                 </div>
             </div>
 
-            <!-- Painel de Edição de Metadados -->
-            <div class="w-full lg:w-96 flex flex-col justify-between space-y-4 bg-slate-900/60 border border-white/10 rounded-2xl p-4 sm:p-5">
-                <div class="space-y-3.5">
+            <!-- FORMULÁRIO DE DADOS TÉCNICOS DA OBRA -->
+            <div class="w-full bg-slate-900/80 border border-white/10 rounded-2xl p-4 sm:p-5 space-y-4">
+                <div class="flex items-center justify-between border-b border-white/10 pb-2">
                     <h3 class="text-xs font-bold uppercase tracking-wider text-amber-400">Dados do Registro</h3>
-                    
+                    <span class="text-[10px] text-slate-400">Preencha ou confirme</span>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Local / Estaca / Km</label>
+                        <label class="block text-xs text-slate-400 mb-1 font-semibold">Local / Estaca / Km</label>
                         <input type="text" id="reviewEstaca" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                     </div>
 
                     <div>
-                        <label class="block text-xs text-slate-400 mb-1">Elemento / Estrutura</label>
+                        <label class="block text-xs text-slate-400 mb-1 font-semibold">Elemento / Estrutura</label>
                         <input type="text" id="reviewElemento" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-sm text-white focus:outline-none focus:border-amber-400">
                     </div>
-
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Classificação Técnica</label>
-                        <div class="grid grid-cols-3 gap-2">
-                            <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 text-xs font-semibold cursor-pointer">
-                                <input type="radio" name="reviewStatus" value="CONFORME" checked class="accent-emerald-400">
-                                <span>Conforme</span>
-                            </label>
-                            <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-300 text-xs font-semibold cursor-pointer">
-                                <input type="radio" name="reviewStatus" value="OBSERVACAO" class="accent-amber-400">
-                                <span>Atenção</span>
-                            </label>
-                            <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 text-xs font-semibold cursor-pointer">
-                                <input type="radio" name="reviewStatus" value="NAO_CONFORME" class="accent-red-400">
-                                <span>RNC</span>
-                            </label>
-                        </div>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs text-slate-400 mb-1">Observações Técnicas</label>
-                        <textarea id="reviewNotas" rows="3" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400" placeholder="Ex: Armadura conforme projeto estrutural NBR 6118, recobrimento validado em 35mm."></textarea>
-                    </div>
-
-                    <button id="btnReapplyStamp" class="w-full py-2 rounded-xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold transition-all">
-                        🔄 Recarimbar com Novos Dados
-                    </button>
                 </div>
 
-                <!-- Ações -->
-                <div class="space-y-2 pt-2 border-t border-white/10">
-                    <button id="btnSaveToGallery" class="w-full py-3 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-bold text-sm shadow-lg shadow-amber-500/20 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
-                        <span>💾 Salvar Registro</span>
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-semibold">Classificação Técnica</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-emerald-500/40 bg-emerald-500/10 text-emerald-300 text-xs font-semibold cursor-pointer">
+                            <input type="radio" name="reviewStatus" value="CONFORME" checked class="accent-emerald-400">
+                            <span>Conforme</span>
+                        </label>
+                        <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-amber-500/40 bg-amber-500/10 text-amber-300 text-xs font-semibold cursor-pointer">
+                            <input type="radio" name="reviewStatus" value="OBSERVACAO" class="accent-amber-400">
+                            <span>Atenção</span>
+                        </label>
+                        <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl border border-red-500/40 bg-red-500/10 text-red-300 text-xs font-semibold cursor-pointer">
+                            <input type="radio" name="reviewStatus" value="NAO_CONFORME" class="accent-red-400">
+                            <span>RNC</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs text-slate-400 mb-1 font-semibold">Observações Técnicas</label>
+                    <textarea id="reviewNotas" rows="2" class="w-full rounded-xl bg-black/40 border border-white/10 px-3 py-2 text-xs text-white focus:outline-none focus:border-amber-400" placeholder="Ex: Armadura conforme projeto estrutural NBR 6118, recobrimento validado em 35mm."></textarea>
+                </div>
+
+                <button id="btnReapplyStamp" class="w-full py-2.5 rounded-xl border border-cyan-500/30 bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-300 text-xs font-semibold transition-all">
+                    🔄 Recarimbar com Novos Dados
+                </button>
+
+                <!-- Ações de Gravação e Compartilhamento -->
+                <div class="space-y-2 pt-3 border-t border-white/10">
+                    <button id="btnSaveToGallery" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 text-slate-950 font-black text-sm shadow-xl shadow-amber-500/25 active:scale-95 transition-all flex items-center justify-center gap-2 cursor-pointer">
+                        <span>💾 Salvar Registro na Galeria</span>
                     </button>
                     <div class="grid grid-cols-2 gap-2">
                         <button id="btnDownloadPhoto" class="py-2.5 rounded-xl border border-white/15 bg-white/5 hover:bg-white/10 text-white text-xs font-semibold transition-all flex items-center justify-center gap-1.5 cursor-pointer">
@@ -457,33 +466,37 @@ $v = time();
         </div>
 
         <!-- Bottom Floating Dock (Toolbox) -->
-        <div class="p-3 bg-slate-900 border-t border-white/10 flex flex-wrap items-center justify-between gap-3">
-            <!-- Ferramentas de Desenho -->
-            <div class="flex items-center gap-1.5 overflow-x-auto">
-                <button type="button" data-tool="arrow" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/40 bg-amber-500/20 text-amber-300 transition-all cursor-pointer">
+        <div class="p-2.5 sm:p-3 bg-slate-900 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-2.5">
+            <!-- Ferramentas de Desenho com rolagem horizontal livre no mobile -->
+            <div id="markupToolsBar" class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 no-scrollbar touch-pan-x">
+                <button type="button" data-tool="arrow" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/40 bg-amber-500/20 text-amber-300 transition-all cursor-pointer">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     <span>Seta</span>
                 </button>
-                <button type="button" data-tool="circle" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
-                    <span>Círculo</span>
-                </button>
-                <button type="button" data-tool="rect" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
-                    <span>Retângulo</span>
-                </button>
-                <button type="button" data-tool="pen" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
+                <button type="button" data-tool="pen" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
                     <span>Traço</span>
                 </button>
-                <button type="button" data-tool="text" class="markup-tool-btn px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
+                <button type="button" data-tool="blur" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer" title="Desfocar / Censurar Placas e Rostos">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/></svg>
+                    <span>Blur</span>
+                </button>
+                <button type="button" data-tool="text" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg>
                     <span>Texto</span>
+                </button>
+                <button type="button" data-tool="circle" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/></svg>
+                    <span>Círculo</span>
+                </button>
+                <button type="button" data-tool="rect" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+                    <span>Quadrado</span>
                 </button>
             </div>
 
             <!-- Cores & Espessura -->
-            <div class="flex items-center gap-4">
+            <div class="flex items-center justify-between w-full md:w-auto gap-3 shrink-0">
                 <!-- Seletor de Cores Técnicas -->
                 <div class="flex items-center gap-1.5">
                     <button type="button" data-color="#EF4444" class="markup-color-btn w-7 h-7 rounded-full bg-red-500 border-2 border-white shadow-md transition-transform scale-110 cursor-pointer" title="Vermelho RNC / Falha"></button>
