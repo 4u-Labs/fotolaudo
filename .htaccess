@@ -1,0 +1,12 @@
+<IfModule mod_headers.c>
+    # Não cachear index.php e service-worker para sempre carregar a versão mais recente
+    <FilesMatch "^(index\.php|service-worker\.js)$">
+        Header set Cache-Control "no-cache, no-store, must-revalidate"
+        Header set Pragma "no-cache"
+        Header set Expires 0
+    </FilesMatch>
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json .json
+</IfModule>

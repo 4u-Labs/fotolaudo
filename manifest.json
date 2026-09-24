@@ -1,0 +1,24 @@
+{
+  "name": "FotoLaudo — Câmera Técnica de Engenharia & Infraestrutura",
+  "short_name": "FotoLaudo",
+  "description": "Câmera técnica com carimbo de campo, GPS, coordenadas UTM, nível de bolha virtual, bússola e emissão de laudos para rodovias, pedágios e indústrias.",
+  "start_url": "./index.php",
+  "display": "standalone",
+  "background_color": "#06080D",
+  "theme_color": "#0A0F1D",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
