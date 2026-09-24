@@ -1747,7 +1747,7 @@
                 x1: coords.x1,
                 y1: coords.y1,
                 x2: coords.x2,
-                y2: coords.y,
+                y2: coords.y2,
                 text: text,
                 color: state.markup.color,
                 lineWidth: state.markup.lineWidth
@@ -1944,6 +1944,8 @@
             canvas.style.cursor = state.markup.activeTool === 'select' ? 'default' : 'crosshair';
         }
 
+        const coords = getMarkupCanvasCoords(e);
+
         // Se estava redimensionando pelas alças:
         if (state.markup.isResizing) {
             state.markup.isResizing = false;
@@ -1970,10 +1972,20 @@
                     y1 = state.markup.tempAnnotation.y1;
                     x2 = state.markup.tempAnnotation.x2;
                     y2 = state.markup.tempAnnotation.y2;
+                    // Se o usuário arrastou muito pouco (< 35px), expande para cota nítida e visível de pelo menos 140px
+                    const dist = Math.hypot(x2 - x1, y2 - y1);
+                    if (dist < 35) {
+                        const midX = (x1 + x2) / 2;
+                        const midY = (y1 + y2) / 2;
+                        x1 = Math.round(midX - 70);
+                        y1 = Math.round(midY);
+                        x2 = Math.round(midX + 70);
+                        y2 = Math.round(midY);
+                    }
                 } else {
                     // Tap sem arrasto: gera cota horizontal padrão de 140px centrada no toque
-                    const cx = coords.x;
-                    const cy = coords.y;
+                    const cx = coords ? coords.x : state.markup.startX;
+                    const cy = coords ? coords.y : state.markup.startY;
                     x1 = Math.round(cx - 70);
                     y1 = Math.round(cy);
                     x2 = Math.round(cx + 70);
