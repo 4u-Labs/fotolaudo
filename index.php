@@ -446,17 +446,20 @@ $v = time();
                 <span class="text-amber-400 text-lg">✏️</span>
                 <span class="text-sm font-bold text-white">Anotações & Destaques de Campo</span>
             </div>
-            <div class="flex items-center gap-2">
-                <button id="btnMarkupUndo" class="px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-200 flex items-center gap-1 active:scale-95 transition-all cursor-pointer" title="Desfazer última anotação">
+            <div class="flex items-center gap-1.5 sm:gap-2">
+                <button id="btnMarkupDeleteSelected" class="hidden px-2.5 py-1.5 rounded-lg border border-red-500/40 bg-red-500/20 hover:bg-red-500/30 text-xs font-bold text-red-300 flex items-center gap-1 active:scale-95 transition-all cursor-pointer" title="Excluir marcação selecionada">
+                    <span>🗑️ Excluir</span>
+                </button>
+                <button id="btnMarkupUndo" class="px-2.5 sm:px-3 py-1.5 rounded-lg border border-white/10 bg-white/5 hover:bg-white/10 text-xs font-semibold text-slate-200 flex items-center gap-1 active:scale-95 transition-all cursor-pointer" title="Desfazer última anotação">
                     <span>↩️ Desfazer</span>
                 </button>
-                <button id="btnMarkupClear" class="px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-300 flex items-center gap-1 active:scale-95 transition-all cursor-pointer" title="Limpar todas as anotações">
-                    <span>🗑️ Limpar</span>
+                <button id="btnMarkupClear" class="px-2.5 sm:px-3 py-1.5 rounded-lg border border-red-500/30 bg-red-500/10 hover:bg-red-500/20 text-xs font-semibold text-red-300 flex items-center gap-1 active:scale-95 transition-all cursor-pointer" title="Limpar todas as anotações">
+                    <span>Limpar</span>
                 </button>
-                <button id="btnMarkupApply" class="px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
+                <button id="btnMarkupApply" class="px-3.5 sm:px-4 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-400 hover:to-emerald-500 text-white font-bold text-xs shadow-lg shadow-emerald-500/20 active:scale-95 transition-all flex items-center gap-1 cursor-pointer">
                     <span>✓ Concluir</span>
                 </button>
-                <button id="btnMarkupCancel" class="text-slate-400 hover:text-white p-1.5 text-base cursor-pointer">✕</button>
+                <button id="btnMarkupCancel" class="text-slate-400 hover:text-white p-1 text-base cursor-pointer">✕</button>
             </div>
         </div>
 
@@ -469,7 +472,11 @@ $v = time();
         <div class="p-2.5 sm:p-3 bg-slate-900 border-t border-white/10 flex flex-col md:flex-row items-center justify-between gap-2.5">
             <!-- Ferramentas de Desenho com rolagem horizontal livre no mobile -->
             <div id="markupToolsBar" class="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto pb-1 md:pb-0 no-scrollbar touch-pan-x">
-                <button type="button" data-tool="arrow" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/40 bg-amber-500/20 text-amber-300 transition-all cursor-pointer">
+                <button type="button" data-tool="select" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-cyan-500/50 bg-cyan-500/25 text-cyan-300 shadow-md transition-all cursor-pointer" title="Selecionar e Deslocar/Mover Marcações">
+                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 3l6 15 2-6 6-2L5 3z"/></svg>
+                    <span>Mover</span>
+                </button>
+                <button type="button" data-tool="arrow" class="markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer">
                     <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>
                     <span>Seta</span>
                 </button>
@@ -512,6 +519,47 @@ $v = time();
                     <button type="button" data-size="8" class="markup-size-btn px-2.5 py-1 rounded-lg text-xs text-amber-300 font-bold border border-amber-500/40 bg-amber-500/20 cursor-pointer">Médio</button>
                     <button type="button" data-size="14" class="markup-size-btn px-2.5 py-1 rounded-lg text-xs text-slate-300 font-semibold border border-transparent hover:text-white cursor-pointer">Grosso</button>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: INSERÇÃO RÁPIDA DE TEXTO / RÓTULO TÉCNICO -->
+    <div id="modalTextInput" class="hidden fixed inset-0 z-[60] bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-white/15 rounded-2xl p-4 sm:p-5 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center justify-between border-b border-white/10 pb-2">
+                <div class="flex items-center gap-2">
+                    <span class="text-amber-400 text-lg">🏷️</span>
+                    <h3 class="text-sm font-bold text-white">Rótulo Técnico de Campo</h3>
+                </div>
+                <button id="btnCancelTextInput" type="button" class="text-slate-400 hover:text-white p-1 text-base cursor-pointer">✕</button>
+            </div>
+
+            <div>
+                <label class="block text-xs text-slate-300 font-semibold mb-1.5">Texto do Destaque:</label>
+                <input type="text" id="textInputContent" class="w-full rounded-xl bg-black/60 border border-white/20 px-3.5 py-2.5 text-sm text-white font-mono focus:outline-none focus:border-amber-400" placeholder="Ex: FISSURA 0.3mm">
+            </div>
+
+            <!-- Atalhos Técnicos com 1 toque -->
+            <div>
+                <label class="block text-[11px] text-slate-400 font-medium mb-1.5">Atalhos Frequentes de Obras & Infraestrutura:</label>
+                <div class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto">
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Fissura / Trinca</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Armadura Exposta</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Infiltração / Umidade</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Desaprumo</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Falha Concretagem</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">Medição / Cota</button>
+                    <button type="button" class="text-chip px-2.5 py-1 rounded-lg bg-white/5 hover:bg-amber-500/20 text-slate-200 hover:text-amber-300 text-xs border border-white/10 transition-all cursor-pointer">RNC / Falha Crítica</button>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2 pt-2 border-t border-white/10">
+                <button id="btnDismissTextInput" type="button" class="px-4 py-2 rounded-xl border border-white/10 bg-white/5 text-slate-300 text-xs font-semibold cursor-pointer">
+                    Cancelar
+                </button>
+                <button id="btnConfirmTextInput" type="button" class="px-5 py-2 rounded-xl bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold text-xs shadow-lg shadow-amber-500/25 active:scale-95 transition-all cursor-pointer">
+                    ✓ Inserir & Mover
+                </button>
             </div>
         </div>
     </div>

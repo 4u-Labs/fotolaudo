@@ -48,11 +48,16 @@
         },
         currentCapture: null, // dados da foto temporária em revisão
         markup: {
-            activeTool: 'arrow', // 'arrow', 'circle', 'rect', 'blur', 'pen', 'text'
+            activeTool: 'select', // 'select', 'arrow', 'pen', 'blur', 'text', 'circle', 'rect'
             color: '#EF4444',
             lineWidth: 8,
             annotations: [],
+            selectedIndex: -1,
             isDrawing: false,
+            isDraggingAnnotation: false,
+            dragStartPoint: null,
+            dragInitialAnnotation: null,
+            pendingTextPos: null,
             startX: 0,
             startY: 0,
             currentPoints: [],
@@ -610,31 +615,33 @@
         if (dist < 4) return;
 
         const angle = Math.atan2(dy, dx);
-        const headLen = Math.max(22 * scale, lineWidth * 3.2);
-        const headAngle = Math.PI / 6; // 30 graus
+        const sc = scale || 1;
+        // Cabeça e traço proeminentes, adequados para visualização nítida em telas móveis e fotos
+        const headLen = Math.max(30 * sc, lineWidth * 3.5);
+        const headAngle = Math.PI / 5.5; // ~32 graus
 
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-        ctx.shadowBlur = 6 * scale;
-        ctx.shadowOffsetX = 2 * scale;
-        ctx.shadowOffsetY = 2 * scale;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 8 * sc;
+        ctx.shadowOffsetX = 3 * sc;
+        ctx.shadowOffsetY = 3 * sc;
 
         ctx.strokeStyle = color;
         ctx.fillStyle = color;
-        ctx.lineWidth = lineWidth;
+        ctx.lineWidth = Math.max(4 * sc, lineWidth);
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
-        // Linha da haste (para ligeiramente antes da ponta)
+        // Linha da haste (para antes da ponta para encaixe estético perfeito)
         ctx.beginPath();
         ctx.moveTo(x1, y1);
         ctx.lineTo(
-            x2 - Math.cos(angle) * (headLen * 0.4),
-            y2 - Math.sin(angle) * (headLen * 0.4)
+            x2 - Math.cos(angle) * (headLen * 0.45),
+            y2 - Math.sin(angle) * (headLen * 0.45)
         );
         ctx.stroke();
 
-        // Cabeça geométrica com entalhe
+        // Cabeça geométrica com entalhe técnico
         ctx.beginPath();
         ctx.moveTo(x2, y2);
         ctx.lineTo(
@@ -657,28 +664,30 @@
 
     function drawCircle(ctx, cx, cy, rx, ry, color, lineWidth, scale) {
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-        ctx.shadowBlur = 6 * scale;
-        ctx.shadowOffsetX = 2 * scale;
-        ctx.shadowOffsetY = 2 * scale;
+        const sc = scale || 1;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 8 * sc;
+        ctx.shadowOffsetX = 2 * sc;
+        ctx.shadowOffsetY = 2 * sc;
 
         ctx.strokeStyle = color;
-        ctx.lineWidth = lineWidth;
+        ctx.lineWidth = Math.max(3 * sc, lineWidth);
         ctx.beginPath();
-        ctx.ellipse(cx, cy, Math.max(6, rx), Math.max(6, ry), 0, 0, 2 * Math.PI);
+        ctx.ellipse(cx, cy, Math.max(12 * sc, rx), Math.max(12 * sc, ry), 0, 0, 2 * Math.PI);
         ctx.stroke();
         ctx.restore();
     }
 
     function drawRect(ctx, x, y, w, h, color, lineWidth, scale) {
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-        ctx.shadowBlur = 6 * scale;
-        ctx.shadowOffsetX = 2 * scale;
-        ctx.shadowOffsetY = 2 * scale;
+        const sc = scale || 1;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 8 * sc;
+        ctx.shadowOffsetX = 2 * sc;
+        ctx.shadowOffsetY = 2 * sc;
 
         ctx.strokeStyle = color;
-        ctx.lineWidth = lineWidth;
+        ctx.lineWidth = Math.max(3 * sc, lineWidth);
         ctx.strokeRect(x, y, w, h);
         ctx.restore();
     }
@@ -697,7 +706,7 @@
         ctx.save();
         try {
             // Mosaico pixelado técnico de alta performance (sem bibliotecas externas)
-            const pixelSize = Math.max(6, Math.round(12 * sc));
+            const pixelSize = Math.max(8, Math.round(16 * sc));
             const miniW = Math.max(1, Math.floor(sw / pixelSize));
             const miniH = Math.max(1, Math.floor(sh / pixelSize));
 
@@ -716,27 +725,27 @@
 
             // Borda técnica tracejada discreta em ciano/azul para indicar a área censurada
             ctx.strokeStyle = '#00D2FF';
-            ctx.lineWidth = Math.max(1.5, 2 * sc);
-            ctx.setLineDash([6 * sc, 4 * sc]);
+            ctx.lineWidth = Math.max(2 * sc, 3);
+            ctx.setLineDash([8 * sc, 5 * sc]);
             ctx.strokeRect(x0, y0, sw, sh);
 
             // Rótulo discreto "BLUR" no canto
             ctx.setLineDash([]);
-            const tagSize = Math.max(9, Math.round(11 * sc));
+            const tagSize = Math.max(10, Math.round(12 * sc));
             ctx.font = `bold ${tagSize}px "JetBrains Mono", Inter, sans-serif`;
             const labelText = 'BLUR';
             const textMetrics = ctx.measureText(labelText);
-            ctx.fillStyle = 'rgba(7, 11, 20, 0.75)';
-            ctx.fillRect(x0 + 2, y0 + 2, textMetrics.width + 6, tagSize + 4);
+            ctx.fillStyle = 'rgba(7, 11, 20, 0.85)';
+            ctx.fillRect(x0 + 2, y0 + 2, textMetrics.width + 8 * sc, tagSize + 6 * sc);
             ctx.fillStyle = '#00D2FF';
             ctx.textBaseline = 'top';
-            ctx.fillText(labelText, x0 + 5, y0 + 3);
+            ctx.fillText(labelText, x0 + 4 * sc, y0 + 3 * sc);
         } catch (e) {
             // Fallback para tarja fosca caso canvas esteja restrito
             ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
             ctx.fillRect(x0, y0, sw, sh);
             ctx.strokeStyle = '#00D2FF';
-            ctx.lineWidth = Math.max(1.5, 2 * sc);
+            ctx.lineWidth = Math.max(2 * sc, 3);
             ctx.strokeRect(x0, y0, sw, sh);
         }
         ctx.restore();
@@ -744,14 +753,15 @@
 
     function drawPen(ctx, points, color, lineWidth, scale) {
         if (!points || points.length < 2) return;
+        const sc = scale || 1;
         ctx.save();
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-        ctx.shadowBlur = 6 * scale;
-        ctx.shadowOffsetX = 2 * scale;
-        ctx.shadowOffsetY = 2 * scale;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 8 * sc;
+        ctx.shadowOffsetX = 2 * sc;
+        ctx.shadowOffsetY = 2 * sc;
 
         ctx.strokeStyle = color;
-        ctx.lineWidth = lineWidth;
+        ctx.lineWidth = Math.max(3 * sc, lineWidth);
         ctx.lineCap = 'round';
         ctx.lineJoin = 'round';
 
@@ -764,38 +774,41 @@
         ctx.restore();
     }
 
-    function drawTextLabel(ctx, x, y, text, color, scale) {
+    function drawTextLabel(ctx, x, y, text, color, scale, lineWidth) {
         if (!text) return;
         ctx.save();
-        const fontSize = Math.max(14, Math.round(18 * scale));
+        const sc = scale || 1;
+        // Tamanho do texto amplo e perfeitamente legível no mobile e relatórios
+        const baseSize = (lineWidth && lineWidth >= 14) ? 26 : ((lineWidth && lineWidth <= 4) ? 18 : 22);
+        const fontSize = Math.max(16, Math.round(baseSize * sc));
         ctx.font = `bold ${fontSize}px "JetBrains Mono", Inter, sans-serif`;
 
-        const padH = Math.round(12 * scale);
-        const padV = Math.round(8 * scale);
+        const padH = Math.round(14 * sc);
+        const padV = Math.round(10 * sc);
         const textW = ctx.measureText(text).width;
         const textH = fontSize;
 
         let boxX = x;
         let boxY = y - textH - padV * 2;
-        if (boxY < 10) boxY = y + padV;
+        if (boxY < 15 * sc) boxY = y + padV + 6 * sc;
         if (boxX + textW + padH * 2 > ctx.canvas.width) {
             boxX = Math.max(10, ctx.canvas.width - textW - padH * 2 - 10);
         }
 
         const boxW = textW + padH * 2;
         const boxH = textH + padV * 2;
-        const radius = Math.round(6 * scale);
+        const radius = Math.round(8 * sc);
 
         // Sombra da caixa
-        ctx.shadowColor = 'rgba(0, 0, 0, 0.85)';
-        ctx.shadowBlur = 8 * scale;
-        ctx.shadowOffsetX = 2 * scale;
-        ctx.shadowOffsetY = 3 * scale;
+        ctx.shadowColor = 'rgba(0, 0, 0, 0.9)';
+        ctx.shadowBlur = 10 * sc;
+        ctx.shadowOffsetX = 3 * sc;
+        ctx.shadowOffsetY = 4 * sc;
 
         // Fundo da etiqueta escura com borda na cor técnica
-        ctx.fillStyle = 'rgba(7, 11, 20, 0.92)';
+        ctx.fillStyle = 'rgba(7, 11, 20, 0.94)';
         ctx.strokeStyle = color;
-        ctx.lineWidth = Math.max(2, 2.5 * scale);
+        ctx.lineWidth = Math.max(2.5 * sc, 3);
 
         ctx.beginPath();
         if (typeof ctx.roundRect === 'function') {
@@ -808,7 +821,7 @@
 
         // Ponto de fixação na coordenada exata do clique
         ctx.beginPath();
-        ctx.arc(x, y, Math.round(5 * scale), 0, 2 * Math.PI);
+        ctx.arc(x, y, Math.round(6 * sc), 0, 2 * Math.PI);
         ctx.fillStyle = color;
         ctx.fill();
 
@@ -845,9 +858,208 @@
                 drawPen(ctx, a.points, col, lw, scale);
                 break;
             case 'text':
-                drawTextLabel(ctx, a.x, a.y, a.text, col, scale);
+                drawTextLabel(ctx, a.x, a.y, a.text, col, scale, a.lineWidth);
                 break;
         }
+    }
+
+    // ============================================================
+    // GESTÃO DE SELEÇÃO & DESLOCAMENTO (MOVER MARCAÇÕES)
+    // ============================================================
+    function getAnnotationBounds(a, scale) {
+        if (!a) return null;
+        const sc = scale || 1;
+        switch (a.type) {
+            case 'rect':
+            case 'blur': {
+                const x0 = Math.min(a.x, a.x + a.w);
+                const y0 = Math.min(a.y, a.y + a.h);
+                const w0 = Math.abs(a.w);
+                const h0 = Math.abs(a.h);
+                return { minX: x0, minY: y0, maxX: x0 + w0, maxY: y0 + h0 };
+            }
+            case 'circle': {
+                return {
+                    minX: a.cx - a.rx,
+                    minY: a.cy - a.ry,
+                    maxX: a.cx + a.rx,
+                    maxY: a.cy + a.ry
+                };
+            }
+            case 'arrow': {
+                const pad = Math.max(20 * sc, 30);
+                return {
+                    minX: Math.min(a.x1, a.x2) - pad,
+                    minY: Math.min(a.y1, a.y2) - pad,
+                    maxX: Math.max(a.x1, a.x2) + pad,
+                    maxY: Math.max(a.y1, a.y2) + pad
+                };
+            }
+            case 'text': {
+                const baseSize = (a.lineWidth && a.lineWidth >= 14) ? 26 : ((a.lineWidth && a.lineWidth <= 4) ? 18 : 22);
+                const fontSize = Math.max(16, Math.round(baseSize * sc));
+                const padH = Math.round(14 * sc);
+                const padV = Math.round(10 * sc);
+                const textW = (a.text.length * fontSize * 0.65);
+                const boxW = textW + padH * 2;
+                const boxH = fontSize + padV * 2;
+                let boxX = a.x;
+                let boxY = a.y - fontSize - padV * 2;
+                if (boxY < 15 * sc) boxY = a.y + padV + 6 * sc;
+                return {
+                    minX: boxX,
+                    minY: boxY,
+                    maxX: boxX + boxW,
+                    maxY: boxY + boxH
+                };
+            }
+            case 'pen': {
+                if (!a.points || a.points.length === 0) return null;
+                let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+                a.points.forEach(p => {
+                    if (p.x < minX) minX = p.x;
+                    if (p.y < minY) minY = p.y;
+                    if (p.x > maxX) maxX = p.x;
+                    if (p.y > maxY) maxY = p.y;
+                });
+                const pad = Math.max(15 * sc, 20);
+                return { minX: minX - pad, minY: minY - pad, maxX: maxX + pad, maxY: maxY + pad };
+            }
+        }
+        return null;
+    }
+
+    function isPointInAnnotation(px, py, a, scale) {
+        if (!a) return false;
+        const sc = scale || 1;
+        // Tolerância generosa para o toque de dedo no celular (hit testing fácil)
+        const tolerance = Math.max(30 * sc, 40);
+
+        switch (a.type) {
+            case 'rect':
+            case 'blur': {
+                const x0 = Math.min(a.x, a.x + a.w);
+                const y0 = Math.min(a.y, a.y + a.h);
+                const w0 = Math.abs(a.w);
+                const h0 = Math.abs(a.h);
+                return px >= x0 - tolerance && px <= x0 + w0 + tolerance &&
+                       py >= y0 - tolerance && py <= y0 + h0 + tolerance;
+            }
+            case 'circle': {
+                const dx = (px - a.cx) / (Math.max(15 * sc, a.rx) + tolerance);
+                const dy = (py - a.cy) / (Math.max(15 * sc, a.ry) + tolerance);
+                return (dx * dx + dy * dy) <= 1.25;
+            }
+            case 'text': {
+                const bounds = getAnnotationBounds(a, sc);
+                if (!bounds) return false;
+                return px >= bounds.minX - tolerance && px <= bounds.maxX + tolerance &&
+                       py >= bounds.minY - tolerance && py <= bounds.maxY + tolerance;
+            }
+            case 'arrow': {
+                const x1 = a.x1, y1 = a.y1, x2 = a.x2, y2 = a.y2;
+                const l2 = (x2 - x1) ** 2 + (y2 - y1) ** 2;
+                if (l2 === 0) return Math.hypot(px - x1, py - y1) <= tolerance;
+                let t = ((px - x1) * (x2 - x1) + (py - y1) * (y2 - y1)) / l2;
+                t = Math.max(0, Math.min(1, t));
+                const projX = x1 + t * (x2 - x1);
+                const projY = y1 + t * (y2 - y1);
+                return Math.hypot(px - projX, py - projY) <= tolerance;
+            }
+            case 'pen': {
+                if (!a.points || a.points.length === 0) return false;
+                for (let i = 0; i < a.points.length - 1; i++) {
+                    const p1 = a.points[i];
+                    const p2 = a.points[i + 1];
+                    const l2 = (p2.x - p1.x) ** 2 + (p2.y - p1.y) ** 2;
+                    let t = l2 === 0 ? 0 : ((px - p1.x) * (p2.x - p1.x) + (py - p1.y) * (p2.y - p1.y)) / l2;
+                    t = Math.max(0, Math.min(1, t));
+                    const projX = p1.x + t * (p2.x - p1.x);
+                    const projY = p1.y + t * (p2.y - p1.y);
+                    if (Math.hypot(px - projX, py - projY) <= tolerance) return true;
+                }
+                return false;
+            }
+        }
+        return false;
+    }
+
+    function moveAnnotation(a, dx, dy) {
+        if (!a) return;
+        switch (a.type) {
+            case 'arrow':
+                a.x1 += dx;
+                a.y1 += dy;
+                a.x2 += dx;
+                a.y2 += dy;
+                break;
+            case 'circle':
+                a.cx += dx;
+                a.cy += dy;
+                break;
+            case 'rect':
+            case 'blur':
+            case 'text':
+                a.x += dx;
+                a.y += dy;
+                break;
+            case 'pen':
+                if (a.points) {
+                    a.points.forEach(p => {
+                        p.x += dx;
+                        p.y += dy;
+                    });
+                }
+                break;
+        }
+    }
+
+    function drawSelectionBox(ctx, a, scale) {
+        if (!a) return;
+        const sc = scale || 1;
+        const bounds = getAnnotationBounds(a, sc);
+        if (!bounds) return;
+
+        const pad = Math.round(12 * sc);
+        const minX = bounds.minX - pad;
+        const minY = bounds.minY - pad;
+        const w = (bounds.maxX - bounds.minX) + pad * 2;
+        const h = (bounds.maxY - bounds.minY) + pad * 2;
+
+        ctx.save();
+        // Borda tracejada ciano estilo CAD de seleção
+        ctx.strokeStyle = '#00D2FF';
+        ctx.lineWidth = Math.max(2, 2.5 * sc);
+        ctx.setLineDash([8 * sc, 5 * sc]);
+        ctx.strokeRect(minX, minY, w, h);
+
+        // Alças nos 4 cantos
+        ctx.setLineDash([]);
+        ctx.fillStyle = '#00D2FF';
+        const handleSize = Math.max(10, Math.round(14 * sc));
+        const halfH = handleSize / 2;
+
+        ctx.fillRect(minX - halfH, minY - halfH, handleSize, handleSize);
+        ctx.fillRect(minX + w - halfH, minY - halfH, handleSize, handleSize);
+        ctx.fillRect(minX - halfH, minY + h - halfH, handleSize, handleSize);
+        ctx.fillRect(minX + w - halfH, minY + h - halfH, handleSize, handleSize);
+
+        // Etiqueta indicativa "ARRASTE PARA MOVER"
+        const tagFontSize = Math.max(11, Math.round(13 * sc));
+        ctx.font = `bold ${tagFontSize}px "JetBrains Mono", Inter, sans-serif`;
+        const label = '👆 ARRASTE P/ MOVER';
+        const lm = ctx.measureText(label);
+        const tagH = tagFontSize + 8 * sc;
+        const tagW = lm.width + 14 * sc;
+        const tagY = (minY - tagH - 6 * sc > 10) ? (minY - tagH - 6 * sc) : (minY + h + 8 * sc);
+
+        ctx.fillStyle = 'rgba(0, 210, 255, 0.95)';
+        ctx.fillRect(minX, tagY, tagW, tagH);
+        ctx.fillStyle = '#030712';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(label, minX + 7 * sc, tagY + tagH / 2);
+
+        ctx.restore();
     }
 
     async function stampImage(imageSource, meta) {
@@ -867,9 +1079,12 @@
         // Escala dinâmica do carimbo proporcional à largura da imagem
         const scale = Math.max(1, width / 1280);
 
+        // Escala específica para anotações e blur correspondente à visualização mobile de referência (380px)
+        const markupScale = Math.max(1, Math.min(width, height) / 380);
+
         // 2. Desenhar as anotações técnicas sobre a foto base
         if (meta && meta.annotations && Array.isArray(meta.annotations) && meta.annotations.length > 0) {
-            meta.annotations.forEach(a => drawAnnotation(ctx, a, scale));
+            meta.annotations.forEach(a => drawAnnotation(ctx, a, markupScale));
         }
 
         const fontSans = 'Inter, -apple-system, sans-serif';
@@ -1171,8 +1386,19 @@
     }
 
     // ============================================================
-    // EDITOR DE ANOTAÇÕES TÉCNICAS (SETAS, CÍRCULOS, TEXTOS)
+    // EDITOR DE ANOTAÇÕES TÉCNICAS (SETAS, CÍRCULOS, TEXTOS, BLUR)
     // ============================================================
+    function getMarkupScale() {
+        const canvas = document.getElementById('markupCanvas');
+        if (!canvas) return 1;
+        const rect = canvas.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+            return Math.max(1, Math.min(canvas.width, canvas.height) / 380);
+        }
+        // Razão exata entre pixels do canvas interno e pixels visíveis no viewport da tela
+        return Math.max(canvas.width / rect.width, canvas.height / rect.height);
+    }
+
     function openMarkupEditor() {
         const c = state.currentCapture;
         if (!c || !c.rawImg) return;
@@ -1181,7 +1407,19 @@
         state.markup.annotations = JSON.parse(JSON.stringify(c.meta.annotations || []));
         state.markup.tempAnnotation = null;
         state.markup.isDrawing = false;
+        state.markup.isDraggingAnnotation = false;
+        state.markup.dragStartPoint = null;
+        state.markup.dragInitialAnnotation = null;
+        state.markup.pendingTextPos = null;
         state.markup.currentPoints = [];
+
+        // Se já houver anotações na imagem, abre no modo 'select' (Mover) para facilitar edição
+        // Se a foto estiver limpa, inicia na ferramenta 'arrow' (Seta)
+        state.markup.activeTool = state.markup.annotations.length > 0 ? 'select' : 'arrow';
+        state.markup.selectedIndex = -1;
+
+        const delBtn = document.getElementById('btnMarkupDeleteSelected');
+        if (delBtn) delBtn.classList.add('hidden');
 
         const canvas = document.getElementById('markupCanvas');
         if (canvas) {
@@ -1199,7 +1437,9 @@
 
     function closeMarkupEditor() {
         state.markup.isDrawing = false;
+        state.markup.isDraggingAnnotation = false;
         state.markup.tempAnnotation = null;
+        state.markup.selectedIndex = -1;
         document.getElementById('modalMarkupEditor').classList.add('hidden');
     }
 
@@ -1220,6 +1460,8 @@
     function undoMarkup() {
         if (state.markup.annotations.length > 0) {
             state.markup.annotations.pop();
+            state.markup.selectedIndex = -1;
+            document.getElementById('btnMarkupDeleteSelected')?.classList.add('hidden');
             renderMarkupCanvas();
         }
     }
@@ -1228,8 +1470,19 @@
         if (state.markup.annotations.length > 0) {
             if (confirm('Deseja apagar todas as marcações desta foto?')) {
                 state.markup.annotations = [];
+                state.markup.selectedIndex = -1;
+                document.getElementById('btnMarkupDeleteSelected')?.classList.add('hidden');
                 renderMarkupCanvas();
             }
+        }
+    }
+
+    function deleteSelectedMarkup() {
+        if (state.markup.selectedIndex >= 0 && state.markup.selectedIndex < state.markup.annotations.length) {
+            state.markup.annotations.splice(state.markup.selectedIndex, 1);
+            state.markup.selectedIndex = -1;
+            document.getElementById('btnMarkupDeleteSelected')?.classList.add('hidden');
+            renderMarkupCanvas();
         }
     }
 
@@ -1241,12 +1494,19 @@
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(state.markup.baseImage, 0, 0, canvas.width, canvas.height);
 
-        const scale = Math.max(1, canvas.width / 1280);
+        const scale = getMarkupScale();
 
+        // Desenhar anotações existentes
         state.markup.annotations.forEach(a => drawAnnotation(ctx, a, scale));
 
+        // Desenhar anotação em criação (preview em tempo real)
         if (state.markup.tempAnnotation) {
             drawAnnotation(ctx, state.markup.tempAnnotation, scale);
+        }
+
+        // Desenhar destaque técnico (caixa de seleção) no item selecionado
+        if (state.markup.selectedIndex >= 0 && state.markup.selectedIndex < state.markup.annotations.length) {
+            drawSelectionBox(ctx, state.markup.annotations[state.markup.selectedIndex], scale);
         }
     }
 
@@ -1261,27 +1521,90 @@
         };
     }
 
+    // Modal de Inserção de Texto
+    function openTextInputModal(x, y) {
+        state.markup.pendingTextPos = { x, y };
+        const input = document.getElementById('textInputContent');
+        if (input) {
+            input.value = '';
+            setTimeout(() => input.focus(), 150);
+        }
+        document.getElementById('modalTextInput')?.classList.remove('hidden');
+    }
+
+    function closeTextInputModal() {
+        document.getElementById('modalTextInput')?.classList.add('hidden');
+        state.markup.pendingTextPos = null;
+        // Sempre retorna com segurança para o modo Mover
+        state.markup.activeTool = 'select';
+        updateMarkupToolUi();
+    }
+
+    function confirmTextInput(presetText) {
+        const input = document.getElementById('textInputContent');
+        const text = (presetText || (input ? input.value : '')).trim();
+        if (text && state.markup.pendingTextPos) {
+            state.markup.annotations.push({
+                type: 'text',
+                x: state.markup.pendingTextPos.x,
+                y: state.markup.pendingTextPos.y,
+                text: text,
+                color: state.markup.color,
+                lineWidth: state.markup.lineWidth
+            });
+            state.markup.selectedIndex = state.markup.annotations.length - 1;
+            document.getElementById('btnMarkupDeleteSelected')?.classList.remove('hidden');
+            renderMarkupCanvas();
+        }
+        closeTextInputModal();
+    }
+
     function onMarkupPointerDown(e) {
         const canvas = document.getElementById('markupCanvas');
         if (!canvas) return;
         const coords = getMarkupCanvasCoords(e);
+        const scale = getMarkupScale();
 
+        // 1. Se a ferramenta selecionada for TEXTO:
         if (state.markup.activeTool === 'text') {
-            const txt = prompt('Digite o texto ou rótulo técnico (ex: FISSURA 0.3mm, ARMADURA EXPOSTA):', 'Fissura');
-            if (txt && txt.trim()) {
-                state.markup.annotations.push({
-                    type: 'text',
-                    x: coords.x,
-                    y: coords.y,
-                    text: txt.trim(),
-                    color: state.markup.color,
-                    lineWidth: state.markup.lineWidth
-                });
-                renderMarkupCanvas();
-            }
+            openTextInputModal(coords.x, coords.y);
             return;
         }
 
+        // 2. Se a ferramenta for MOVER (select):
+        if (state.markup.activeTool === 'select') {
+            let hitIndex = -1;
+            for (let i = state.markup.annotations.length - 1; i >= 0; i--) {
+                if (isPointInAnnotation(coords.x, coords.y, state.markup.annotations[i], scale)) {
+                    hitIndex = i;
+                    break;
+                }
+            }
+
+            if (hitIndex >= 0) {
+                state.markup.selectedIndex = hitIndex;
+                state.markup.isDraggingAnnotation = true;
+                state.markup.dragStartPoint = { x: coords.x, y: coords.y };
+                state.markup.dragInitialAnnotation = JSON.parse(JSON.stringify(state.markup.annotations[hitIndex]));
+                document.getElementById('btnMarkupDeleteSelected')?.classList.remove('hidden');
+                canvas.style.cursor = 'grabbing';
+                try { canvas.setPointerCapture(e.pointerId); } catch (err) {}
+                renderMarkupCanvas();
+                return;
+            } else {
+                // Toque fora de qualquer anotação: desmarca
+                state.markup.selectedIndex = -1;
+                state.markup.isDraggingAnnotation = false;
+                document.getElementById('btnMarkupDeleteSelected')?.classList.add('hidden');
+                canvas.style.cursor = 'default';
+                renderMarkupCanvas();
+                return;
+            }
+        }
+
+        // 3. Ferramentas de Desenho (arrow, pen, blur, circle, rect)
+        state.markup.selectedIndex = -1;
+        document.getElementById('btnMarkupDeleteSelected')?.classList.add('hidden');
         state.markup.isDrawing = true;
         state.markup.startX = coords.x;
         state.markup.startY = coords.y;
@@ -1296,16 +1619,28 @@
     }
 
     function onMarkupPointerMove(e) {
-        if (!state.markup.isDrawing) return;
         const canvas = document.getElementById('markupCanvas');
         if (!canvas) return;
-
         const coords = getMarkupCanvasCoords(e);
+        const col = state.markup.color;
+        const lw = state.markup.lineWidth;
+
+        // 1. Arrastando anotação para deslocar em tempo real (Mover)
+        if (state.markup.isDraggingAnnotation && state.markup.selectedIndex >= 0) {
+            const dx = coords.x - state.markup.dragStartPoint.x;
+            const dy = coords.y - state.markup.dragStartPoint.y;
+            const moved = JSON.parse(JSON.stringify(state.markup.dragInitialAnnotation));
+            moveAnnotation(moved, dx, dy);
+            state.markup.annotations[state.markup.selectedIndex] = moved;
+            renderMarkupCanvas();
+            return;
+        }
+
+        // 2. Desenhando nova anotação
+        if (!state.markup.isDrawing) return;
         const tool = state.markup.activeTool;
         const sx = state.markup.startX;
         const sy = state.markup.startY;
-        const col = state.markup.color;
-        const lw = state.markup.lineWidth;
 
         if (tool === 'arrow') {
             const dist = Math.hypot(coords.x - sx, coords.y - sy);
@@ -1366,33 +1701,56 @@
     }
 
     function onMarkupPointerUp(e) {
-        if (!state.markup.isDrawing) return;
-        state.markup.isDrawing = false;
-
         const canvas = document.getElementById('markupCanvas');
         if (canvas) {
             try {
                 canvas.releasePointerCapture(e.pointerId);
             } catch (err) {}
+            canvas.style.cursor = state.markup.activeTool === 'select' ? 'default' : 'crosshair';
         }
 
-        if (state.markup.tempAnnotation) {
-            state.markup.annotations.push(state.markup.tempAnnotation);
-            state.markup.tempAnnotation = null;
+        // Se estava arrastando para deslocar:
+        if (state.markup.isDraggingAnnotation) {
+            state.markup.isDraggingAnnotation = false;
+            renderMarkupCanvas();
+            return;
         }
-        state.markup.currentPoints = [];
-        renderMarkupCanvas();
+
+        // Se estava desenhando:
+        if (state.markup.isDrawing) {
+            state.markup.isDrawing = false;
+            if (state.markup.tempAnnotation) {
+                state.markup.annotations.push(state.markup.tempAnnotation);
+                state.markup.tempAnnotation = null;
+                // Seleciona automaticamente o item recém-desenhado e alterna para modo Mover
+                state.markup.selectedIndex = state.markup.annotations.length - 1;
+                state.markup.activeTool = 'select';
+                updateMarkupToolUi();
+                document.getElementById('btnMarkupDeleteSelected')?.classList.remove('hidden');
+            }
+            state.markup.currentPoints = [];
+            renderMarkupCanvas();
+        }
     }
 
     function updateMarkupToolUi() {
         document.querySelectorAll('.markup-tool-btn').forEach(btn => {
             const tool = btn.dataset.tool;
             if (tool === state.markup.activeTool) {
-                btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/50 bg-amber-500/25 text-amber-300 shadow-md transition-all cursor-pointer';
+                if (tool === 'select') {
+                    btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-cyan-500/50 bg-cyan-500/25 text-cyan-300 shadow-md transition-all cursor-pointer';
+                } else {
+                    btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5 border border-amber-500/50 bg-amber-500/25 text-amber-300 shadow-md transition-all cursor-pointer';
+                }
             } else {
                 btn.className = 'markup-tool-btn shrink-0 px-3 py-2 rounded-xl text-xs font-semibold flex items-center gap-1.5 border border-white/10 bg-white/5 text-slate-300 hover:bg-white/10 transition-all cursor-pointer';
             }
         });
+
+        const canvas = document.getElementById('markupCanvas');
+        if (canvas) {
+            canvas.style.cursor = state.markup.activeTool === 'select' ? 'default' : 'crosshair';
+        }
     }
 
     function updateMarkupColorUi() {
@@ -1874,14 +2232,36 @@
         document.getElementById('btnSharePhoto')?.addEventListener('click', shareCurrentPhoto);
 
         // Modal de Editor de Anotações Técnicas (Markup)
+        document.getElementById('btnMarkupDeleteSelected')?.addEventListener('click', deleteSelectedMarkup);
         document.getElementById('btnMarkupUndo')?.addEventListener('click', undoMarkup);
         document.getElementById('btnMarkupClear')?.addEventListener('click', clearMarkup);
         document.getElementById('btnMarkupApply')?.addEventListener('click', applyMarkup);
         document.getElementById('btnMarkupCancel')?.addEventListener('click', closeMarkupEditor);
 
+        // Modal de Inserção de Texto Técnico
+        document.getElementById('btnCancelTextInput')?.addEventListener('click', closeTextInputModal);
+        document.getElementById('btnDismissTextInput')?.addEventListener('click', closeTextInputModal);
+        document.getElementById('btnConfirmTextInput')?.addEventListener('click', () => confirmTextInput());
+        document.getElementById('textInputContent')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                confirmTextInput();
+            }
+        });
+        document.querySelectorAll('#modalTextInput .text-chip').forEach(chip => {
+            chip.addEventListener('click', () => {
+                confirmTextInput(chip.textContent.trim());
+            });
+        });
+
         document.querySelectorAll('.markup-tool-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 state.markup.activeTool = btn.dataset.tool;
+                if (state.markup.activeTool !== 'select') {
+                    state.markup.selectedIndex = -1;
+                    document.getElementById('btnMarkupDeleteSelected')?.classList.add('hidden');
+                    renderMarkupCanvas();
+                }
                 updateMarkupToolUi();
             });
         });
@@ -1889,6 +2269,10 @@
         document.querySelectorAll('.markup-color-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 state.markup.color = btn.dataset.color;
+                if (state.markup.selectedIndex >= 0 && state.markup.selectedIndex < state.markup.annotations.length) {
+                    state.markup.annotations[state.markup.selectedIndex].color = state.markup.color;
+                    renderMarkupCanvas();
+                }
                 updateMarkupColorUi();
             });
         });
@@ -1896,6 +2280,10 @@
         document.querySelectorAll('.markup-size-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 state.markup.lineWidth = parseInt(btn.dataset.size, 10);
+                if (state.markup.selectedIndex >= 0 && state.markup.selectedIndex < state.markup.annotations.length) {
+                    state.markup.annotations[state.markup.selectedIndex].lineWidth = state.markup.lineWidth;
+                    renderMarkupCanvas();
+                }
                 updateMarkupSizeUi();
             });
         });

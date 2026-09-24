@@ -1,4 +1,4 @@
-const CACHE_NAME = 'fotolaudo-v1.5';
+const CACHE_NAME = 'fotolaudo-v1.6';
 const ASSETS_TO_CACHE = [
   './',
   './index.php',
