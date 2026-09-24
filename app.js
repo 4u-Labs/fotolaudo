@@ -1710,6 +1710,31 @@
             mCanvas.addEventListener('pointercancel', onMarkupPointerUp);
         }
 
+        // Suporte a arrasto horizontal com mouse (desktop & tablets)
+        function makeHorizontalScrollable(el) {
+            if (!el) return;
+            let isDown = false;
+            let startX = 0;
+            let scrollLeft = 0;
+
+            el.addEventListener('mousedown', (e) => {
+                isDown = true;
+                startX = e.pageX - el.offsetLeft;
+                scrollLeft = el.scrollLeft;
+            });
+            el.addEventListener('mouseleave', () => { isDown = false; });
+            el.addEventListener('mouseup', () => { isDown = false; });
+            el.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - el.offsetLeft;
+                const walk = (x - startX) * 1.5;
+                el.scrollLeft = scrollLeft - walk;
+            });
+        }
+        makeHorizontalScrollable(document.getElementById('topToolsBar'));
+        makeHorizontalScrollable(document.getElementById('quickChipsContainer'));
+
         // Modal de Galeria
         document.getElementById('btnOpenGallery')?.addEventListener('click', openGalleryModal);
         document.getElementById('btnCloseGallery')?.addEventListener('click', () => {

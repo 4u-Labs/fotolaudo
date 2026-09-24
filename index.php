@@ -85,17 +85,17 @@ $v = time();
             <div id="levelDot" class="level-indicator-dot"></div>
         </div>
 
-        <!-- HUD: BARRA SUPERIOR (Status, Obras, Toggles) -->
-        <div class="absolute top-0 inset-x-0 p-3 sm:p-4 bg-gradient-to-b from-black/80 via-black/40 to-transparent z-30 flex items-center justify-between gap-2">
+        <!-- HUD: BARRA SUPERIOR (Status, Obras, Toggles com Rolagem Horizontal) -->
+        <div class="absolute top-0 inset-x-0 p-2 sm:p-4 bg-gradient-to-b from-black/85 via-black/45 to-transparent z-30 flex items-center justify-between gap-2 overflow-hidden">
             <!-- Seletor de Projeto / Obra -->
-            <button id="btnProjectSelector" class="glass-pill px-3 py-1.5 rounded-full flex items-center gap-2 max-w-[200px] sm:max-w-xs cursor-pointer active:scale-95 transition-all">
+            <button id="btnProjectSelector" class="glass-pill px-3 py-1.5 rounded-full flex items-center gap-1.5 shrink-0 cursor-pointer active:scale-95 transition-all max-w-[145px] sm:max-w-xs" title="Selecionar ou Configurar Obra">
                 <span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse shrink-0"></span>
                 <span id="currentProjectBadge" class="text-xs font-semibold text-amber-200 truncate">Pedágio P02 Km 84</span>
-                <span class="text-[10px] text-amber-400">▾</span>
+                <span class="text-[10px] text-amber-400 shrink-0">▾</span>
             </button>
 
             <!-- Telemetria Rápida Central (Graus / Nível) -->
-            <div class="hidden sm:flex items-center gap-3 text-xs font-telemetry bg-black/60 border border-white/10 px-3 py-1 rounded-full backdrop-blur-md">
+            <div class="hidden md:flex items-center gap-3 text-xs font-telemetry bg-black/60 border border-white/10 px-3 py-1 rounded-full backdrop-blur-md shrink-0">
                 <span id="quickAzimuth" class="text-cyan-400 font-bold">0° N</span>
                 <span class="text-slate-600">|</span>
                 <span id="quickLevel" class="text-emerald-400 font-bold">0.0°</span>
@@ -103,26 +103,26 @@ $v = time();
                 <span id="quickGpsAcc" class="text-slate-300">±--m</span>
             </div>
 
-            <!-- Botões de Controle Rápido -->
-            <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- Botões de Controle Rápido (Com rolagem horizontal para telas pequenas) -->
+            <div id="topToolsBar" class="flex items-center gap-1.5 sm:gap-2 overflow-x-auto no-scrollbar py-1 px-1 touch-pan-x flex-1 min-w-0 justify-start sm:justify-end">
                 <!-- Lanterna / Flash -->
-                <button id="btnTorch" class="w-9 h-9 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-amber-400 transition-colors" title="Lanterna/Flash">
+                <button id="btnTorch" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-amber-400 active:scale-90 transition-all cursor-pointer" title="Lanterna/Flash">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
                 </button>
                 <!-- Alternar Grade -->
-                <button id="btnToggleGrid" class="w-9 h-9 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-cyan-400 transition-colors" title="Alternar Grade">
+                <button id="btnToggleGrid" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-cyan-400 active:scale-90 transition-all cursor-pointer" title="Alternar Grade">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M15 3v18M3 9h18M3 15h18"/></svg>
                 </button>
                 <!-- Alternar Nível -->
-                <button id="btnToggleLevel" class="w-9 h-9 rounded-full glass-pill flex items-center justify-center text-emerald-400 border-emerald-500/40 hover:text-emerald-300 transition-colors" title="Nível de Bolha">
+                <button id="btnToggleLevel" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-emerald-400 border-emerald-500/40 hover:text-emerald-300 active:scale-90 transition-all cursor-pointer" title="Nível de Bolha">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M2 12h20M12 2a15 15 0 0 1 0 20M12 2a15 15 0 0 0 0 20"/></svg>
                 </button>
                 <!-- Inverter Câmera -->
-                <button id="btnFlipCamera" class="w-9 h-9 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white transition-colors" title="Trocar Câmera">
+                <button id="btnFlipCamera" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Trocar Câmera">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
                 </button>
                 <!-- Configurações da Obra -->
-                <button id="btnOpenSettings" class="w-9 h-9 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white transition-colors" title="Configurações">
+                <button id="btnOpenSettings" class="w-9 h-9 shrink-0 rounded-full glass-pill flex items-center justify-center text-slate-200 hover:text-white active:scale-90 transition-all cursor-pointer" title="Configurações">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
                 </button>
             </div>
